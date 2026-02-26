@@ -9,7 +9,7 @@ export function useClients() {
     queryKey: [api.clients.list.path],
     queryFn: async () => {
       const res = await fetch(api.clients.list.path, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to fetch clients");
+      if (!res.ok) throw new Error("Mijozlar yuklanmadi");
       return api.clients.list.responses[200].parse(await res.json());
     },
   });
@@ -25,7 +25,7 @@ export function useCreateClient() {
         body: JSON.stringify(data),
         credentials: "include",
       });
-      if (!res.ok) throw new Error("Failed to create client");
+      if (!res.ok) throw new Error("Mijoz yaratilmadi");
       return api.clients.create.responses[201].parse(await res.json());
     },
     onSuccess: () => {

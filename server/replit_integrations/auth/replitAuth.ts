@@ -7,6 +7,7 @@ import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { authStorage } from "./storage";
+import { setupLocalAuth, isLocalLogin } from "./localAuth";
 
 const getOidcConfig = memoize(
   async () => {
@@ -34,7 +35,7 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === "production",
       maxAge: sessionTtl,
     },
   });
@@ -60,11 +61,57 @@ async function upsertUser(claims: any) {
   });
 }
 
+const DISABLE_AUTH = process.env.DISABLE_AUTH === "true";
+
+const mockUser = {
+  claims: { sub: "local-user", email: "local@local", first_name: "Local", last_name: "User" },
+  expires_at: Math.floor(Date.now() / 1000) + 86400 * 365,
+};
+
 export async function setupAuth(app: Express) {
   app.set("trust proxy", 1);
   app.use(getSession());
   app.use(passport.initialize());
   app.use(passport.session());
+
+  if (DISABLE_AUTH) {
+    app.use((req, _res, next) => {
+      (req as any).session.passport = { user: mockUser };
+      (req as any).user = mockUser;
+      next();
+    });
+    app.get("/api/login", (_req, res) => res.redirect("/"));
+    app.get("/api/callback", (_req, res) => res.redirect("/"));
+    app.get("/api/logout", (_req, res) => res.redirect("/"));
+    return;
+  }
+
+  // Login/parol orqali kirish (LOCAL_LOGIN=true)
+  if (isLocalLogin()) {
+    passport.serializeUser((user: Express.User, cb) => {
+      const u = user as { id?: string };
+      cb(null, u?.id ?? null);
+    });
+    passport.deserializeUser(async (id: string, cb) => {
+      try {
+        const user = await authStorage.getUser(id);
+        cb(null, user ?? null);
+      } catch (err) {
+        cb(err as Error, null);
+      }
+    });
+    try {
+      await setupLocalAuth(app);
+    } catch (err) {
+      console.warn("[localAuth] Baza tayyor emas (users jadvalida username/password_hash kerak). Iltimos: npm run db:push", (err as Error)?.message);
+      app.post("/api/login", (_req, res) =>
+        res.status(503).json({ message: "Baza yangilanmagan. Terminalda: npm run db:push ni ishlating." })
+      );
+      app.get("/api/logout", (_req, res) => res.redirect("/login"));
+    }
+    app.get("/api/login", (_req, res) => res.redirect("/login"));
+    return;
+  }
 
   const config = await getOidcConfig();
 
@@ -131,9 +178,20 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  if (process.env.DISABLE_AUTH === "true") return next();
   const user = req.user as any;
 
-  if (!req.isAuthenticated() || !user.expires_at) {
+  // Local login: user.id bor bo'lsa yetarli
+  if (isLocalLogin() && req.isAuthenticated() && user?.id) {
+    return next();
+  }
+
+  if (!req.isAuthenticated() || !user) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  // Replit OIDC: expires_at tekshirish
+  if (!user.expires_at) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 

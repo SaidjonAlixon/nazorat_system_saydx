@@ -1,27 +1,83 @@
 import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { api } from "@shared/routes";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { useTransactions, useCreateTransaction, useInvoices, useCreateInvoice } from "@/hooks/use-finance";
+import { useTransactions, useCreateTransaction } from "@/hooks/use-finance";
 import { useProjects } from "@/hooks/use-projects";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { format } from "date-fns";
-import { ArrowDownRight, ArrowUpRight, Plus, FileText, Download } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Plus } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
+const FALLBACK_USD_UZS = 12500;
+
+function toUzs(t: { amount: string; currency: string | null }, usdToUzs: number): number {
+  return t.currency === "USD" ? Number(t.amount) * usdToUzs : Number(t.amount);
+}
+
 export default function Finance() {
   const { data: transactions, isLoading: isTransLoading } = useTransactions();
-  const { data: invoices, isLoading: isInvoicesLoading } = useInvoices();
   const { data: projects } = useProjects();
-  
-  const createTrans = useCreateTransaction();
-  const createInvoice = useCreateInvoice();
-  
-  const [activeTab, setActiveTab] = useState<'transactions' | 'invoices'>('transactions');
-  const [isTransDialogOpen, setIsTransDialogOpen] = useState(false);
-  const [isInvDialogOpen, setIsInvDialogOpen] = useState(false);
+  const { data: currencyData } = useQuery({
+    queryKey: ["/api/currency-rate"],
+    queryFn: async () => {
+      const res = await fetch("/api/currency-rate", { credentials: "include" });
+      const data = (await res.json()) as { usdToUzs?: number; currencyRateSource?: string };
+      return data;
+    },
+  });
+  const usdToUzs = currencyData?.usdToUzs ?? FALLBACK_USD_UZS;
+  const currencyFromApi = currencyData?.currencyRateSource === "api";
 
-  if (isTransLoading || isInvoicesLoading) return <AppLayout><LoadingSpinner message="Moliya yuklanmoqda..." /></AppLayout>;
+  const createTrans = useCreateTransaction();
+  const queryClient = useQueryClient();
+  const [isTransDialogOpen, setIsTransDialogOpen] = useState(false);
+  const [pdfGeneratingId, setPdfGeneratingId] = useState<number | null>(null);
+  const [manualRateInput, setManualRateInput] = useState("");
+  const [hideCurrencyBanner, setHideCurrencyBanner] = useState(false);
+
+  const { data: financeSettings } = useQuery({
+    queryKey: ["/api/settings/finance"],
+    queryFn: async () => {
+      const res = await fetch("/api/settings/finance", { credentials: "include" });
+      const data = (await res.json()) as { manualUsdToUzs?: number | null };
+      return data;
+    },
+  });
+  const savedManualRate = financeSettings?.manualUsdToUzs ?? null;
+
+  const saveManualRate = async () => {
+    const num = Number(manualRateInput.replace(/\s/g, ""));
+    if (!Number.isFinite(num) || num <= 0) {
+      alert("Iltimos, musbat son kiriting (masalan 12500).");
+      return;
+    }
+    try {
+      await fetch("/api/settings/finance", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ manualUsdToUzs: num }),
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/settings/finance"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/currency-rate"] });
+      setManualRateInput("");
+    } catch (e) {
+      alert("Saqlashda xato.");
+    }
+  };
+
+  if (isTransLoading) return <AppLayout><LoadingSpinner message="Moliya yuklanmoqda..." /></AppLayout>;
+
+  const incomeCategories = ["Shartnoma summasi", "Qisman to'lov", "Oldindan to'lov", "Boshqa kirim"];
+  const expenseCategories = ["Server", "Dizayn", "Domen", "Reklama", "Ish haqi", "Boshqa xarajat"];
+
+  const totalIncome = (transactions?.filter(t => t.type === "income") || []).reduce((s, t) => s + toUzs(t, usdToUzs), 0);
+  const totalExpense = (transactions?.filter(t => t.type === "expense") || []).reduce((s, t) => s + toUzs(t, usdToUzs), 0);
+  const profit = totalIncome - totalExpense;
+  const marginPercent = totalIncome > 0 ? Math.round((profit / totalIncome) * 100) : 0;
 
   const handleCreateTrans = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -31,53 +87,96 @@ export default function Finance() {
       type: formData.get("type") as string,
       amount: formData.get("amount") as string,
       category: formData.get("category") as string,
-      description: formData.get("description") as string,
-      currency: "UZS"
+      description: (formData.get("description") as string) || undefined,
+      currency: (formData.get("currency") as string) || "UZS"
     });
     setIsTransDialogOpen(false);
   };
 
-  const handleCreateInvoice = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    await createInvoice.mutateAsync({
-      projectId: Number(formData.get("projectId")),
-      invoiceNumber: formData.get("invoiceNumber") as string,
-      amount: formData.get("amount") as string,
-      dueDate: new Date(formData.get("dueDate") as string),
-      currency: "UZS",
-      status: "unpaid"
-    });
-    setIsInvDialogOpen(false);
+  const handleDownloadPdf = async (inv: { id: number; pdfUrl?: string | null }) => {
+    setPdfGeneratingId(inv.id);
+    try {
+      let url: string;
+      if (inv.pdfUrl) {
+        url = inv.pdfUrl;
+      } else {
+        const res = await fetch(`/api/invoices/${inv.id}/generate-pdf`, { method: "POST", credentials: "include" });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.message || "PDF yaratishda xato");
+        }
+        const data = await res.json();
+        url = data.url;
+        queryClient.invalidateQueries({ queryKey: [api.invoices.list.path] });
+      }
+      window.open(url, "_blank");
+    } catch (e) {
+      console.error(e);
+      alert(e instanceof Error ? e.message : "PDF yuklanmadi");
+    } finally {
+      setPdfGeneratingId(null);
+    }
   };
+
+  const formatCur = (n: number, cur = "UZS") => new Intl.NumberFormat("uz-UZ", { maximumFractionDigits: 0 }).format(n) + " " + cur;
 
   return (
     <AppLayout>
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
           <h1 className="text-3xl font-display font-bold text-white mb-2">Moliya tizimi</h1>
-          <p className="text-muted-foreground">Kirim-chiqim va hisob-fakturalarni boshqarish.</p>
-        </div>
-        
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            className={`border-white/10 ${activeTab === 'transactions' ? 'bg-white/10 text-white' : 'text-white/50 hover:text-white'}`}
-            onClick={() => setActiveTab('transactions')}
-          >
-            Tranzaksiyalar
-          </Button>
-          <Button 
-            variant="outline" 
-            className={`border-white/10 ${activeTab === 'invoices' ? 'bg-white/10 text-white' : 'text-white/50 hover:text-white'}`}
-            onClick={() => setActiveTab('invoices')}
-          >
-            Hisob-fakturalar
-          </Button>
+          <p className="text-muted-foreground">Kirim-chiqim va foyda bo'yicha umumiy ko'rinish.</p>
         </div>
       </div>
 
-      {activeTab === 'transactions' && (
+      {!currencyFromApi && !hideCurrencyBanner && (
+        <div className="mb-6 p-4 rounded-xl bg-amber-500/20 border border-amber-500/50 text-amber-200 text-sm relative pr-10">
+          <strong>Kurs API orqali olinmadi.</strong> Hozir qo'lda kiritilgan yoki standart kurs ishlatilmoqda. USD hisob-kitob to'g'ri bo'lishi uchun quyida &quot;1 USD = ... UZS&quot; maydoniga haqiqiy kursni kiriting va Saqlash bosing.
+          <button type="button" onClick={() => setHideCurrencyBanner(true)} className="absolute top-3 right-3 text-amber-200/80 hover:text-white text-lg leading-none" aria-label="Yopish">×</button>
+        </div>
+      )}
+
+      <div className="glass-panel rounded-xl p-4 mb-6 flex flex-wrap items-end gap-3">
+        <p className="text-sm text-muted-foreground w-full mb-0">USD kursi (API ishlamasa shu kurs ishlatiladi):</p>
+        <div className="flex items-center gap-2">
+          <span className="text-white/80 text-sm">1 USD =</span>
+          <Input
+            type="number"
+            min={1}
+            placeholder={savedManualRate ? String(savedManualRate) : "12500"}
+            value={manualRateInput}
+            onChange={(e) => setManualRateInput(e.target.value)}
+            className="w-32 glass-input text-white"
+          />
+          <span className="text-white/80 text-sm">UZS</span>
+        </div>
+        <Button type="button" size="sm" onClick={saveManualRate} className="bg-primary text-primary-foreground">
+          Saqlash
+        </Button>
+        {savedManualRate != null && (
+          <span className="text-xs text-muted-foreground">Saqlangan: 1 USD = {savedManualRate.toLocaleString("uz-UZ")} UZS</span>
+        )}
+      </div>
+
+      <>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="glass-panel rounded-xl p-4">
+            <p className="text-xs text-muted-foreground mb-1">Jami kirim</p>
+            <p className="text-lg font-bold text-emerald-400">{formatCur(totalIncome)}</p>
+          </div>
+          <div className="glass-panel rounded-xl p-4">
+            <p className="text-xs text-muted-foreground mb-1">Jami chiqim</p>
+            <p className="text-lg font-bold text-destructive">{formatCur(totalExpense)}</p>
+          </div>
+          <div className="glass-panel rounded-xl p-4">
+            <p className="text-xs text-muted-foreground mb-1">Foyda</p>
+            <p className="text-lg font-bold text-white">{formatCur(profit)}</p>
+          </div>
+          <div className="glass-panel rounded-xl p-4">
+            <p className="text-xs text-muted-foreground mb-1">Marja %</p>
+            <p className="text-lg font-bold text-primary">{marginPercent}%</p>
+          </div>
+        </div>
         <div className="space-y-6">
           <div className="flex justify-end">
             <Dialog open={isTransDialogOpen} onOpenChange={setIsTransDialogOpen}>
@@ -96,13 +195,32 @@ export default function Finance() {
                       </select>
                     </div>
                     <div>
-                      <label className="text-sm text-white/70 block mb-1">Miqdor (UZS)</label>
+                      <label className="text-sm text-white/70 block mb-1">Miqdor</label>
                       <Input name="amount" type="number" required className="glass-input text-white" />
                     </div>
                   </div>
                   <div>
+                    <label className="text-sm text-white/70 block mb-1">Valyuta</label>
+                    <select name="currency" className="w-full glass-input p-2 rounded-md text-white">
+                      <option value="UZS" className="text-black">UZS</option>
+                      <option value="USD" className="text-black">USD</option>
+                    </select>
+                  </div>
+                  <div>
                     <label className="text-sm text-white/70 block mb-1">Toifa</label>
-                    <Input name="category" required className="glass-input text-white" placeholder="Masalan: Ish haqi, Server..." />
+                    <select name="category" required className="w-full glass-input p-2 rounded-md text-white">
+                      <option value="" className="text-black">Tanlang...</option>
+                      <optgroup label="Kirim" className="text-black">
+                        {incomeCategories.map(c => <option key={c} value={c} className="text-black">{c}</option>)}
+                      </optgroup>
+                      <optgroup label="Chiqim" className="text-black">
+                        {expenseCategories.map(c => <option key={c} value={c} className="text-black">{c}</option>)}
+                      </optgroup>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm text-white/70 block mb-1">Izoh (ixtiyoriy)</label>
+                    <Input name="description" className="glass-input text-white" placeholder="Qisqa tavsif" />
                   </div>
                   <div>
                     <label className="text-sm text-white/70 block mb-1">Loyiha (ixtiyoriy)</label>
@@ -136,7 +254,7 @@ export default function Finance() {
                     <td className="p-4 text-sm font-bold text-right flex items-center justify-end gap-2">
                       {t.type === 'income' ? <ArrowUpRight className="text-emerald-400 w-4 h-4"/> : <ArrowDownRight className="text-destructive w-4 h-4"/>}
                       <span className={t.type === 'income' ? 'text-emerald-400' : 'text-destructive'}>
-                        {new Intl.NumberFormat('uz-UZ').format(Number(t.amount))} UZS
+                        {new Intl.NumberFormat('uz-UZ').format(Number(t.amount))} {t.currency || 'UZS'}
                       </span>
                     </td>
                   </tr>
@@ -145,69 +263,7 @@ export default function Finance() {
             </table>
           </div>
         </div>
-      )}
-
-      {activeTab === 'invoices' && (
-        <div className="space-y-6">
-          <div className="flex justify-end">
-            <Dialog open={isInvDialogOpen} onOpenChange={setIsInvDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-secondary text-white hover:bg-secondary/80"><FileText className="w-4 h-4 mr-2"/>Yangi Faktura</Button>
-              </DialogTrigger>
-              <DialogContent className="glass-panel border-white/10">
-                <DialogHeader><DialogTitle className="text-white">Yangi hisob-faktura</DialogTitle></DialogHeader>
-                <form onSubmit={handleCreateInvoice} className="space-y-4 mt-4">
-                  <div>
-                    <label className="text-sm text-white/70 block mb-1">Raqami</label>
-                    <Input name="invoiceNumber" required className="glass-input text-white" placeholder="INV-2024-001" />
-                  </div>
-                  <div>
-                    <label className="text-sm text-white/70 block mb-1">Loyiha</label>
-                    <select name="projectId" required className="w-full glass-input p-2 rounded-md text-white">
-                      <option value="" className="text-black">Tanlang...</option>
-                      {projects?.map(p => <option key={p.id} value={p.id} className="text-black">{p.name}</option>)}
-                    </select>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm text-white/70 block mb-1">Miqdor</label>
-                      <Input name="amount" type="number" required className="glass-input text-white" />
-                    </div>
-                    <div>
-                      <label className="text-sm text-white/70 block mb-1">To'lov muddati</label>
-                      <Input name="dueDate" type="date" required className="glass-input text-white" />
-                    </div>
-                  </div>
-                  <Button type="submit" disabled={createInvoice.isPending} className="w-full bg-secondary text-white">Yaratish</Button>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {invoices?.map(inv => (
-              <div key={inv.id} className="glass-panel rounded-2xl p-6 border border-white/5 hover:border-secondary/30 transition-colors">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="p-3 rounded-xl bg-secondary/10 text-secondary"><FileText className="w-6 h-6"/></div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${inv.status === 'paid' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-orange-500/20 text-orange-400'}`}>
-                    {inv.status === 'paid' ? "To'langan" : "Kutilmoqda"}
-                  </span>
-                </div>
-                <h3 className="text-xl font-bold text-white mb-1">{inv.invoiceNumber}</h3>
-                <p className="text-sm text-muted-foreground mb-4">{projects?.find(p => p.id === inv.projectId)?.name}</p>
-                <div className="text-2xl font-bold text-white mb-6">{new Intl.NumberFormat('uz-UZ').format(Number(inv.amount))} UZS</div>
-                
-                <div className="flex items-center justify-between border-t border-white/5 pt-4">
-                  <div className="text-xs text-muted-foreground">Muddat: {format(new Date(inv.dueDate), 'dd.MM.yyyy')}</div>
-                  <Button variant="ghost" size="sm" className="text-secondary hover:text-white hover:bg-secondary/20">
-                    <Download className="w-4 h-4 mr-1"/> PDF
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      </>
     </AppLayout>
   );
 }

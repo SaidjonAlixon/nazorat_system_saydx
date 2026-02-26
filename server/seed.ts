@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { db } from "./db";
 import { clients, projects, tasks, timeEntries, transactions, invoices, users } from "@shared/schema";
 
@@ -63,7 +64,7 @@ async function seed() {
       riskLevel: "HIGH"
     }).returning();
 
-    // Seed Tasks
+    // Seed Tasks (10 ta)
     const [task1] = await db.insert(tasks).values({
       projectId: project1.id,
       title: "Frontend dizaynini tasdiqlash",
@@ -90,6 +91,63 @@ async function seed() {
       status: "todo",
       loggedMinutes: 0
     }).returning();
+
+    await db.insert(tasks).values({
+      projectId: project1.id,
+      title: "Ma'lumotlar bazasi sxemasini yaratish",
+      description: "Drizzle/PostgreSQL migratsiyalar",
+      priority: "medium",
+      status: "done",
+      loggedMinutes: 90
+    });
+    await db.insert(tasks).values({
+      projectId: project1.id,
+      title: "To'lov integratsiyasi (Payme/Click)",
+      description: "Checkout sahifa va webhook",
+      priority: "high",
+      status: "todo",
+      loggedMinutes: 0
+    });
+    await db.insert(tasks).values({
+      projectId: project1.id,
+      title: "Admin panel",
+      description: "Mahsulotlar va buyurtmalar boshqaruvi",
+      priority: "medium",
+      status: "todo",
+      loggedMinutes: 0
+    });
+    await db.insert(tasks).values({
+      projectId: project2.id,
+      title: "CRM bilan ulash",
+      description: "Mijozlar va leadlar sinxronizatsiya",
+      priority: "medium",
+      status: "in progress",
+      loggedMinutes: 45
+    });
+    await db.insert(tasks).values({
+      projectId: project2.id,
+      title: "Xabarnomalar sozlash",
+      description: "Telegram va email bildirishnomalar",
+      priority: "low",
+      status: "todo",
+      loggedMinutes: 0
+    });
+    await db.insert(tasks).values({
+      projectId: project1.id,
+      title: "Test yozish va deploy",
+      description: "E2E testlar va production deploy",
+      priority: "high",
+      status: "todo",
+      loggedMinutes: 0
+    });
+    await db.insert(tasks).values({
+      projectId: project2.id,
+      title: "Dokumentatsiya",
+      description: "Bot API va foydalanish bo'yicha qo'llanma",
+      priority: "low",
+      status: "todo",
+      loggedMinutes: 0
+    });
 
     // Seed Time Entries
     await db.insert(timeEntries).values({

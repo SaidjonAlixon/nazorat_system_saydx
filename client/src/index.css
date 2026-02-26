@@ -1,5 +1,21 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
+/* Invoice preview container — exact dimensions for PDF export (no A4, no scale) */
+.invoice-preview {
+  overflow: hidden;
+  box-sizing: border-box;
+  width: 794px;
+  height: 1123px;
+}
+@media (max-width: 840px) {
+  .invoice-preview {
+    width: 100%;
+    max-width: 794px;
+    height: auto;
+    min-height: 1123px;
+  }
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -46,6 +62,28 @@
     --chart-3: 150 80% 50%; /* Green */
     --chart-4: 350 80% 60%; /* Red */
     --chart-5: 40 90% 60%;  /* Orange */
+  }
+
+  .light {
+    --background: 0 0% 98%;
+    --foreground: 230 25% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 230 25% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 230 25% 15%;
+    --primary: 190 90% 40%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 270 60% 50%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 230 15% 92%;
+    --muted-foreground: 230 10% 45%;
+    --accent: 230 15% 92%;
+    --accent-foreground: 230 25% 15%;
+    --destructive: 350 80% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 230 15% 88%;
+    --input: 230 15% 90%;
+    --ring: 190 90% 40%;
   }
 
   body {
@@ -99,4 +137,23 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--primary) / 0.5);
+}
+
+/* To'lov muddati — kalendar belgisi oq (qora fonda ko‘rinsin) */
+.date-picker-white-icon::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.9;
+}
+
+/* SAYD.X loading logo: o'nga yurib yo'qoladi, chapdan kirib 3s turadi, takrorlanadi */
+@keyframes saydx-logo-cycle {
+  0% { transform: translateX(0); opacity: 1; }
+  37.5% { transform: translateX(0); opacity: 1; }
+  50% { transform: translateX(90vw); opacity: 0; }
+  50.01% { transform: translateX(-90vw); opacity: 0; }
+  62.5% { transform: translateX(0); opacity: 1; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+.saydx-loading-logo {
+  animation: saydx-logo-cycle 8s ease-in-out infinite;
 }

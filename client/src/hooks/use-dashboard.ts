@@ -6,7 +6,7 @@ export function useDashboardStats() {
     queryKey: [api.dashboard.stats.path],
     queryFn: async () => {
       const res = await fetch(api.dashboard.stats.path, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to fetch dashboard stats");
+      if (!res.ok) throw new Error("Boshqaruv paneli statistikasi yuklanmadi");
       return api.dashboard.stats.responses[200].parse(await res.json());
     },
   });

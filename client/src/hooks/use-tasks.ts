@@ -11,7 +11,7 @@ export function useTasks(projectId: number) {
     queryFn: async () => {
       const url = buildUrl(api.tasks.list.path, { projectId });
       const res = await fetch(url, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to fetch tasks");
+      if (!res.ok) throw new Error("Vazifalar yuklanmadi");
       return api.tasks.list.responses[200].parse(await res.json());
     },
     enabled: !!projectId,
@@ -29,7 +29,7 @@ export function useCreateTask(projectId: number) {
         body: JSON.stringify(data),
         credentials: "include",
       });
-      if (!res.ok) throw new Error("Failed to create task");
+      if (!res.ok) throw new Error("Vazifa yaratilmadi");
       return api.tasks.create.responses[201].parse(await res.json());
     },
     onSuccess: () => {
@@ -49,7 +49,7 @@ export function useUpdateTask(projectId: number) {
         body: JSON.stringify(updates),
         credentials: "include",
       });
-      if (!res.ok) throw new Error("Failed to update task");
+      if (!res.ok) throw new Error("Vazifa yangilanmadi");
       return api.tasks.update.responses[200].parse(await res.json());
     },
     onSuccess: () => {
@@ -69,7 +69,7 @@ export function useLogTime() {
         body: JSON.stringify({ durationMinutes, description }),
         credentials: "include",
       });
-      if (!res.ok) throw new Error("Failed to log time");
+      if (!res.ok) throw new Error("Vaqt yozilmadi");
       return api.timeEntries.create.responses[201].parse(await res.json());
     },
     onSuccess: (_, variables) => {

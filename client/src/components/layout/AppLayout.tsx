@@ -1,21 +1,27 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { 
   LayoutDashboard, 
   Briefcase, 
   Users, 
   Wallet, 
-  Settings,
   LogOut,
-  Hexagon,
   Menu,
-  X
+  X,
+  BarChart3,
+  Calendar,
+  Bell,
+  Sun,
+  Moon,
+  CheckCircle,
+  FileText
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -25,29 +31,56 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [location] = useLocation();
   const { user, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [theme, setTheme] = useState<"dark" | "light">(() => (typeof document !== "undefined" && document.documentElement.classList.contains("light") ? "light" : "dark"));
+  const { data: notifications = [] } = useQuery({
+    queryKey: ["/api/notifications"],
+    queryFn: async () => {
+      const res = await fetch("/api/notifications", { credentials: "include" });
+      if (!res.ok) return [];
+      return res.json();
+    },
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("light", theme === "light");
+    try { localStorage.setItem("s-ubos-theme", theme); } catch (_) {}
+  }, [theme]);
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("s-ubos-theme") as "dark" | "light" | null;
+      if (saved) setTheme(saved);
+    } catch (_) {}
+  }, []);
 
   const navItems = [
     { name: "Boshqaruv paneli", path: "/", icon: LayoutDashboard },
     { name: "Loyihalar", path: "/projects", icon: Briefcase },
+    { name: "Tugallangan loyihalar", path: "/projects/completed", icon: CheckCircle },
     { name: "Mijozlar", path: "/clients", icon: Users },
     { name: "Moliya", path: "/finance", icon: Wallet },
+    { name: "Hisob-faktura", path: "/invoices", icon: FileText },
+    { name: "Analitika", path: "/analytics", icon: BarChart3 },
+    { name: "Kalendar", path: "/calendar", icon: Calendar },
   ];
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full bg-card/60 backdrop-blur-2xl border-r border-white/5">
-      <div className="p-6 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/20">
-          <Hexagon className="text-white w-6 h-6" />
-        </div>
-        <div>
-          <h1 className="font-display font-bold text-xl tracking-tight text-white leading-none">S-UBOS</h1>
-          <p className="text-[10px] text-primary/80 font-medium uppercase tracking-wider">Premium OS</p>
-        </div>
+      <div className="p-6 flex items-center justify-center">
+        <img
+          src="/logo.png"
+          alt="S-UBOS"
+          className="w-24 h-24 rounded-3xl object-contain"
+        />
       </div>
 
       <nav className="flex-1 px-4 py-6 space-y-2">
         {navItems.map((item) => {
-          const isActive = location === item.path || (item.path !== "/" && location.startsWith(item.path));
+          const isActive =
+            item.path === "/projects"
+              ? location === "/projects" || (location.startsWith("/projects/") && location !== "/projects/completed")
+              : item.path === "/projects/completed"
+                ? location === "/projects/completed"
+                : location === item.path || (item.path !== "/" && location.startsWith(item.path));
           return (
             <Link key={item.path} href={item.path} className="block">
               <div className={`
@@ -66,6 +99,40 @@ export function AppLayout({ children }: AppLayoutProps) {
       </nav>
 
       <div className="p-4 border-t border-white/5">
+        <div className="flex items-center gap-2 mb-4">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-white">
+                <Bell className="w-5 h-5" />
+                {notifications.length > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-destructive text-[10px] font-bold text-white flex items-center justify-center">
+                    {notifications.length > 9 ? "9+" : notifications.length}
+                  </span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-72 glass-panel border-white/10 p-0" align="start">
+              <div className="p-2 border-b border-white/5 font-medium text-sm text-white">Ogohlantirishlar</div>
+              <div className="max-h-64 overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <p className="p-3 text-muted-foreground text-sm">Ogohlantirishlar yo'q</p>
+                ) : (
+                  notifications.slice(0, 15).map((a: { projectId: number; title: string; message: string; type: string }) => (
+                    <Link key={`${a.projectId}-${a.type}-${a.message}`} href={`/projects/${a.projectId}`}>
+                      <div className="p-3 hover:bg-white/5 cursor-pointer border-b border-white/5 last:border-0">
+                        <p className="text-sm font-medium text-white truncate">{a.title}</p>
+                        <p className="text-xs text-muted-foreground">{a.message}</p>
+                      </div>
+                    </Link>
+                  ))
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-white" onClick={() => setTheme(t => t === "dark" ? "light" : "dark")} title={theme === "dark" ? "Yorugʻ rejim" : "Qorongʻu rejim"}>
+            {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </Button>
+        </div>
         <div className="glass-panel rounded-xl p-4 flex items-center gap-3 mb-4">
           <Avatar className="w-10 h-10 border-2 border-primary/20">
             <AvatarImage src={user?.profileImageUrl || ""} />
@@ -101,9 +168,8 @@ export function AppLayout({ children }: AppLayoutProps) {
 
       {/* Mobile Header & Menu */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 glass-panel z-50 flex items-center justify-between px-4">
-        <div className="flex items-center gap-2">
-          <Hexagon className="text-primary w-6 h-6" />
-          <span className="font-display font-bold text-lg text-white">S-UBOS</span>
+        <div className="flex-1 flex items-center justify-center">
+          <img src="/logo.png" alt="S-UBOS" className="w-14 h-14 rounded-2xl object-contain" />
         </div>
         <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 text-white">
           <Menu className="w-6 h-6" />

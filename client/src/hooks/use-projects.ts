@@ -10,7 +10,7 @@ export function useProjects() {
     queryKey: [api.projects.list.path],
     queryFn: async () => {
       const res = await fetch(api.projects.list.path, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to fetch projects");
+      if (!res.ok) throw new Error("Loyihalar yuklanmadi");
       return api.projects.list.responses[200].parse(await res.json());
     },
   });
@@ -23,7 +23,7 @@ export function useProject(id: number) {
       const url = buildUrl(api.projects.get.path, { id });
       const res = await fetch(url, { credentials: "include" });
       if (res.status === 404) return null;
-      if (!res.ok) throw new Error("Failed to fetch project");
+      if (!res.ok) throw new Error("Loyiha yuklanmadi");
       return api.projects.get.responses[200].parse(await res.json());
     },
     enabled: !!id,
@@ -41,7 +41,10 @@ export function useCreateProject() {
         body: JSON.stringify(validated),
         credentials: "include",
       });
-      if (!res.ok) throw new Error("Failed to create project");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({})) as { message?: string };
+        throw new Error(data.message || "Loyiha yaratilmadi");
+      }
       return api.projects.create.responses[201].parse(await res.json());
     },
     onSuccess: () => {
@@ -62,7 +65,7 @@ export function useUpdateProject(id: number) {
         body: JSON.stringify(updates),
         credentials: "include",
       });
-      if (!res.ok) throw new Error("Failed to update project");
+      if (!res.ok) throw new Error("Loyiha yangilanmadi");
       return api.projects.update.responses[200].parse(await res.json());
     },
     onSuccess: () => {
@@ -72,17 +75,4 @@ export function useUpdateProject(id: number) {
   });
 }
 
-export function useAnalyzeRisk(id: number) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async () => {
-      const url = buildUrl(api.ai.analyzeRisk.path, { id });
-      const res = await fetch(url, { method: "POST", credentials: "include" });
-      if (!res.ok) throw new Error("Failed to analyze risk");
-      return api.ai.analyzeRisk.responses[200].parse(await res.json());
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [api.projects.get.path, id] });
-    },
-  });
-}
+// AI risk tahlili olib tashlandi

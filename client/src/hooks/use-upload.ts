@@ -76,7 +76,7 @@ export function useUpload(options: UseUploadOptions = {}) {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Failed to get upload URL");
+        throw new Error(errorData.error || "Yuklash manzili olinmadi");
       }
 
       return response.json();
@@ -98,7 +98,7 @@ export function useUpload(options: UseUploadOptions = {}) {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to upload file to storage");
+        throw new Error("Fayl saqlashga yuklanmadi");
       }
     },
     []
@@ -129,7 +129,7 @@ export function useUpload(options: UseUploadOptions = {}) {
         options.onSuccess?.(uploadResponse);
         return uploadResponse;
       } catch (err) {
-        const error = err instanceof Error ? err : new Error("Upload failed");
+        const error = err instanceof Error ? err : new Error("Yuklash muvaffaqiyatsiz");
         setError(error);
         options.onError?.(error);
         return null;
@@ -175,7 +175,7 @@ export function useUpload(options: UseUploadOptions = {}) {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to get upload URL");
+        throw new Error("Yuklash manzili olinmadi");
       }
 
       const data = await response.json();

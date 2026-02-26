@@ -1,12 +1,14 @@
 import { z } from 'zod';
 import { 
   insertClientSchema, 
+  insertCompanySchema,
   insertProjectSchema, 
   insertTaskSchema,
   insertTimeEntrySchema,
   insertTransactionSchema,
   insertInvoiceSchema,
   clients,
+  companies,
   projects,
   tasks,
   timeEntries,
@@ -44,6 +46,14 @@ export const api = {
           totalExpenses: z.number(),
           netProfit: z.number(),
           totalHours: z.number(),
+          averageHourlyRevenue: z.number(),
+          monthlyStats: z.array(z.object({
+            monthKey: z.string(),
+            revenue: z.number(),
+            expense: z.number(),
+          })),
+          deadlineRiskCount: z.number(),
+          currencyRateSource: z.enum(["api", "manual", "fallback"]).optional(),
         }),
       }
     }
@@ -62,6 +72,24 @@ export const api = {
       input: insertClientSchema,
       responses: {
         201: z.custom<typeof clients.$inferSelect>(),
+        400: errorSchemas.validation,
+      }
+    }
+  },
+  companies: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/companies' as const,
+      responses: {
+        200: z.array(z.custom<typeof companies.$inferSelect>()),
+      }
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/companies' as const,
+      input: insertCompanySchema,
+      responses: {
+        201: z.custom<typeof companies.$inferSelect>(),
         400: errorSchemas.validation,
       }
     }
