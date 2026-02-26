@@ -145,15 +145,3 @@
   opacity: 0.9;
 }
 
-/* SAYD.X loading logo: o'nga yurib yo'qoladi, chapdan kirib 3s turadi, takrorlanadi */
-@keyframes saydx-logo-cycle {
-  0% { transform: translateX(0); opacity: 1; }
-  37.5% { transform: translateX(0); opacity: 1; }
-  50% { transform: translateX(90vw); opacity: 0; }
-  50.01% { transform: translateX(-90vw); opacity: 0; }
-  62.5% { transform: translateX(0); opacity: 1; }
-  100% { transform: translateX(0); opacity: 1; }
-}
-.saydx-loading-logo {
-  animation: saydx-logo-cycle 8s ease-in-out infinite;
-}

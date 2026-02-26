@@ -21,23 +21,23 @@ function Router() {
   const { isAuthenticated, isLoading } = useAuth();
   const [location] = useLocation();
 
+  // /login sahifasida darhol formani ko'rsatish (animatsiya va kutishsiz)
+  if (location === "/login") return <Login />;
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center overflow-hidden">
         <img
           src="/logo.png"
           alt="SAYD.X"
-          className="saydx-loading-logo w-52 h-52 sm:w-64 sm:h-64 md:w-72 md:h-72 rounded-3xl object-contain flex-shrink-0"
+          className="w-48 h-48 rounded-2xl object-contain"
         />
       </div>
     );
   }
 
   if (!isAuthenticated) {
-    // Login/parol rejimi (LOCAL_LOGIN): /login sahifasida form
-    if (location === "/login") return <Login />;
-    // Replit OIDC: /api/login orqali OAuth
-    window.location.href = "/api/login";
+    window.location.href = "/login";
     return null;
   }
 
