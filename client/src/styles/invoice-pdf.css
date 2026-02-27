@@ -155,6 +155,17 @@
   text-transform: uppercase;
 }
 
+/* Ko'k sarlavhalar pasdagi ma'lumotlar bilan to'g'risida */
+.invoice-pdf-a4__table thead th.col-num,
+.invoice-pdf-a4__table thead th.col-name {
+  text-align: left;
+}
+.invoice-pdf-a4__table thead th.col-qty,
+.invoice-pdf-a4__table thead th.col-price,
+.invoice-pdf-a4__table thead th.col-total {
+  text-align: right;
+}
+
 .invoice-pdf-a4__table td {
   background: #fff;
 }
@@ -282,6 +293,9 @@
 }
 
 .invoice-pdf-a4__signature {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
   text-align: right;
   font-size: 8pt;
   color: #475569;
@@ -289,10 +303,11 @@
   margin-top: 8pt;
 }
 
+/* Imzo ism familiyadan yuqoriga (3-rasm) */
 .invoice-pdf-a4__signature img {
   max-width: 60pt;
   height: auto;
-  margin-bottom: 2pt;
+  margin-bottom: 6pt;
 }
 
 /* Meta footer */

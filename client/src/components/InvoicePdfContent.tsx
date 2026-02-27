@@ -81,7 +81,7 @@ export function InvoicePdfContent({
           <div style={{ display: "flex", alignItems: "center" }}>
             <img src="/LOGO2.png" alt="SAYD.X" className="invoice-pdf-a4__logo" />
           </div>
-          <h1 className="invoice-pdf-a4__title">Hisob-faktura</h1>
+          <h1 className="invoice-pdf-a4__title">HISOB-FAKTURA</h1>
         </header>
 
         {/* Invoice Details + Status */}

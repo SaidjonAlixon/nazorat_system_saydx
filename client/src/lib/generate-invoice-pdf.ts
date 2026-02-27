@@ -49,6 +49,32 @@ const dateStr = (d: Date | string) =>
     .toLocaleDateString("uz-UZ", { day: "2-digit", month: "2-digit", year: "numeric" })
     .replace(/\//g, ".");
 
+async function loadImageAsBase64(url: string): Promise<string> {
+  const res = await fetch(url);
+  const blob = await res.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function getImageDimensions(dataUrl: string): Promise<{ w: number; h: number }> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const pxPerMm = 96 / 25.4;
+      resolve({
+        w: img.naturalWidth / pxPerMm,
+        h: img.naturalHeight / pxPerMm,
+      });
+    };
+    img.onerror = reject;
+    img.src = dataUrl;
+  });
+}
+
 /**
  * Generates and downloads an invoice PDF using jsPDF + AutoTable.
  * A4 (210×297mm), margin 15mm, true pagination, no clipping.
@@ -83,27 +109,48 @@ export async function generateInvoicePdf(data: InvoicePdfData, filename: string)
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
   let y = MARGIN;
 
-  // Header
-  doc.setFontSize(16);
+  // Header — LOGO2 o'rniga SAYD.X, HISOB-FAKTURA katta harflar
+  try {
+    const logoBase64 = await loadImageAsBase64("/LOGO2.png");
+    const dims = await getImageDimensions(logoBase64);
+    const logoH = 14;
+    const logoW = (dims.w / dims.h) * logoH;
+    doc.addImage(logoBase64, "PNG", MARGIN, y, Math.min(logoW, 50), logoH);
+  } catch {
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(15, 23, 42);
+    doc.text("SAYD.X", MARGIN, y + 6);
+  }
+  doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(15, 23, 42);
-  doc.text("SAYD.X", MARGIN, y + 6);
-  doc.text("Hisob-faktura", PAGE_W - MARGIN, y + 6, { align: "right" });
+  doc.text("HISOB-FAKTURA", PAGE_W - MARGIN, y + 10, { align: "right" });
   doc.setDrawColor(14, 165, 233);
   doc.setLineWidth(0.5);
-  doc.line(MARGIN, y + 10, PAGE_W - MARGIN, y + 10);
-  y += 16;
+  doc.line(MARGIN, y + 16, PAGE_W - MARGIN, y + 16);
+  y += 20;
 
-  // Info blocks
+  // Info blocks — chiroyli dizayn (2-rasm)
+  const blockW = (CONTENT_W - 4) / 2;
+  const blockPadding = 4;
+  const blockY1 = y;
+  const blockH1 = 22;
+  doc.setFillColor(248, 250, 252);
+  doc.setDrawColor(226, 232, 240);
+  doc.roundedRect(MARGIN, blockY1, blockW, blockH1, 2, 2, "FD");
+  doc.roundedRect(MARGIN + blockW + 4, blockY1, blockW, blockH1, 2, 2, "FD");
   doc.setFontSize(6);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(100, 116, 139);
-  doc.text("HISOB-FAKTURA MA'LUMOTLARI", MARGIN, y);
-  doc.text("HOLAT VA VALYUTA", PAGE_W / 2 + 4, y);
+  doc.text("HISOB-FAKTURA MA'LUMOTLARI", MARGIN + blockPadding, y + 5);
+  doc.text("HOLAT VA VALYUTA", MARGIN + blockW + 4 + blockPadding, y + 5);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
   doc.setTextColor(51, 65, 85);
-  y += 5;
+  doc.setDrawColor(226, 232, 240);
+  doc.line(MARGIN + blockPadding, y + 7, MARGIN + blockW - blockPadding, y + 7);
+  doc.line(MARGIN + blockW + 4 + blockPadding, y + 7, PAGE_W - MARGIN - blockPadding, y + 7);
   const leftBlock = [
     `Raqam: ${invoice.invoiceNumber}`,
     `ID: ${validationId}`,
@@ -118,31 +165,37 @@ export async function generateInvoicePdf(data: InvoicePdfData, filename: string)
     `To'lov shartlari: ${invoice.paymentTerms || "7 kun ichida"}`,
     `Valyuta: ${invoice.currency}`,
   ].join("\n");
-  doc.text(leftBlock, MARGIN, y);
-  doc.text(rightBlock, PAGE_W / 2 + 4, y);
-  y += 22;
+  doc.text(leftBlock, MARGIN + blockPadding, y + 12);
+  doc.text(rightBlock, MARGIN + blockW + 4 + blockPadding, y + 12);
+  y += blockH1 + 4;
 
-  // From / Bill To
+  // From / Bill To — chiroyli dizayn
+  const blockH2 = 24;
+  doc.setFillColor(248, 250, 252);
+  doc.setDrawColor(226, 232, 240);
+  doc.roundedRect(MARGIN, y, blockW, blockH2, 2, 2, "FD");
+  doc.roundedRect(MARGIN + blockW + 4, y, blockW, blockH2, 2, 2, "FD");
   doc.setFontSize(6);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(100, 116, 139);
-  doc.text("FROM (Tomonidan)", MARGIN, y);
-  doc.text("BILL TO (Kimga)", PAGE_W / 2 + 4, y);
+  doc.text("FROM (Tomonidan)", MARGIN + blockPadding, y + 5);
+  doc.text("BILL TO (Kimga)", MARGIN + blockW + 4 + blockPadding, y + 5);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
   doc.setTextColor(51, 65, 85);
-  y += 5;
+  doc.line(MARGIN + blockPadding, y + 7, MARGIN + blockW - blockPadding, y + 7);
+  doc.line(MARGIN + blockW + 4 + blockPadding, y + 7, PAGE_W - MARGIN - blockPadding, y + 7);
   doc.text(
     [settings.companyName, settings.address, settings.phone, `${settings.email} • ${settings.website}`].join("\n"),
-    MARGIN,
-    y
+    MARGIN + blockPadding,
+    y + 12
   );
   doc.text(
     [invoice.clientName || "—", invoice.company || "—", invoice.billToContact || "—"].join("\n"),
-    PAGE_W / 2 + 4,
-    y
+    MARGIN + blockW + 4 + blockPadding,
+    y + 12
   );
-  y += 24;
+  y += blockH2 + 4;
 
   // Table — column widths 5% | 45% | 15% | 15% | 20% of 180mm
   const cw = [9, 81, 27, 27, 36];
@@ -236,24 +289,34 @@ export async function generateInvoicePdf(data: InvoicePdfData, filename: string)
   doc.text(paymentLines, MARGIN + 4, y + 12);
   y += paymentH + 4;
 
-  // Signature block
+  // Signature block — imzo ism familiyadan yuqoriga (3-rasm)
+  const sigX = MARGIN + 50;
+  const sigStartY = y;
+  let sigCurrentY = y;
+  try {
+    const imzoBase64 = await loadImageAsBase64("/imzo.PNG");
+    const imzoW = 18;
+    const imzoH = 10;
+    doc.addImage(imzoBase64, "PNG", sigX, sigCurrentY, imzoW, imzoH);
+    sigCurrentY += imzoH + 2;
+  } catch {
+    // imzo yuklanmasa, bo'sh joy
+  }
   doc.setFontSize(7);
+  doc.setFont("helvetica", "normal");
   doc.setTextColor(71, 85, 105);
+  doc.text(settings.authorizedName, sigX, sigCurrentY);
+  doc.text(settings.authorizedPosition, sigX, sigCurrentY + 5);
+  doc.text(dateStr(issueDate), sigX, sigCurrentY + 10);
   doc.setDrawColor(14, 165, 233);
-  doc.circle(MARGIN + 20, y + 12, 8);
-  doc.circle(MARGIN + 20, y + 12, 6);
+  doc.circle(MARGIN + 20, sigStartY + 12, 8);
+  doc.circle(MARGIN + 20, sigStartY + 12, 6);
   doc.setFontSize(5);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(14, 165, 233);
-  doc.text("SAYD.X", MARGIN + 20, y + 10, { align: "center" });
-  doc.text("VERIFIED", MARGIN + 20, y + 14, { align: "center" });
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
-  doc.setTextColor(71, 85, 105);
-  doc.text(settings.authorizedName, MARGIN + 50, y + 6);
-  doc.text(settings.authorizedPosition, MARGIN + 50, y + 10);
-  doc.text(dateStr(issueDate), MARGIN + 50, y + 14);
-  y += 24;
+  doc.text("SAYD.X", MARGIN + 20, sigStartY + 10, { align: "center" });
+  doc.text("VERIFIED", MARGIN + 20, sigStartY + 14, { align: "center" });
+  y += Math.max(24, sigCurrentY + 14 - sigStartY);
 
   // Footer — only on last page
   doc.setFontSize(8);
