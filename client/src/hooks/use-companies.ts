@@ -25,7 +25,10 @@ export function useCreateCompany() {
         body: JSON.stringify(data),
         credentials: "include",
       });
-      if (!res.ok) throw new Error("Kompaniya yaratilmadi");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Kompaniya yaratilmadi");
+      }
       return api.companies.create.responses[201].parse(await res.json());
     },
     onSuccess: () => {

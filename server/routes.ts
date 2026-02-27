@@ -134,14 +134,22 @@ export async function registerRoutes(
 
   app.post(api.clients.create.path, isAuthenticated, async (req, res) => {
     try {
-      const input = api.clients.create.input.parse(req.body);
+      const body = req.body as Record<string, unknown>;
+      const cleaned = {
+        name: String(body.name ?? "").trim(),
+        company: body.company ? String(body.company).trim() || undefined : undefined,
+        email: body.email ? String(body.email).trim() || undefined : undefined,
+        phone: body.phone ? String(body.phone).trim() || undefined : undefined,
+      };
+      const input = api.clients.create.input.parse(cleaned);
       const client = await storage.createClient(input);
       res.status(201).json(client);
     } catch (err) {
       if (err instanceof z.ZodError) {
         return res.status(400).json({ message: err.errors[0].message, field: err.errors[0].path.join('.') });
       }
-      res.status(500).json({ message: "Failed to create client" });
+      console.error("[api/clients POST]", err);
+      res.status(500).json({ message: err instanceof Error ? err.message : "Mijoz yaratilmadi" });
     }
   });
 
@@ -152,14 +160,21 @@ export async function registerRoutes(
 
   app.post(api.companies.create.path, isAuthenticated, async (req, res) => {
     try {
-      const input = api.companies.create.input.parse(req.body);
+      const body = req.body as Record<string, unknown>;
+      const cleaned = {
+        name: String(body.name ?? "").trim(),
+        responsibleTelegram: body.responsibleTelegram ? String(body.responsibleTelegram).trim() || undefined : undefined,
+        additionalInfo: body.additionalInfo ? String(body.additionalInfo).trim() || undefined : undefined,
+      };
+      const input = api.companies.create.input.parse(cleaned);
       const company = await storage.createCompany(input);
       res.status(201).json(company);
     } catch (err) {
       if (err instanceof z.ZodError) {
         return res.status(400).json({ message: err.errors[0].message, field: err.errors[0].path.join('.') });
       }
-      res.status(500).json({ message: "Failed to create company" });
+      console.error("[api/companies POST]", err);
+      res.status(500).json({ message: err instanceof Error ? err.message : "Kompaniya yaratilmadi" });
     }
   });
 

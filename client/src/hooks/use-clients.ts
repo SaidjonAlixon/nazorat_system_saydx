@@ -25,7 +25,10 @@ export function useCreateClient() {
         body: JSON.stringify(data),
         credentials: "include",
       });
-      if (!res.ok) throw new Error("Mijoz yaratilmadi");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Mijoz yaratilmadi");
+      }
       return api.clients.create.responses[201].parse(await res.json());
     },
     onSuccess: () => {
