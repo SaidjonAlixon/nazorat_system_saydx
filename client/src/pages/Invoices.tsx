@@ -353,64 +353,6 @@ export default function Invoices() {
   });
   const s = invoiceSettings;
 
-  if (isLoading) {
-    return (
-      <AppLayout>
-        <LoadingSpinner message="Hisob-fakturalar yuklanmoqda..." />
-      </AppLayout>
-    );
-  }
-
-  const totalFromRows = invoiceRows.reduce(
-    (s, r) => s + (Number(r.quantity) || 0) * (Number(r.unitPrice) || 0),
-    0
-  );
-
-  const handleCreateInvoice = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const projectId = Number(formData.get("projectId"));
-    if (!projectId || projectId < 1) {
-      alert("Iltimos, loyihani tanlang.");
-      return;
-    }
-    const serverOrApiWithoutDate = invoiceRows.some(
-      (r) => (r.serviceType === "server" || r.serviceType === "api") && r.title.trim() && !r.startDate
-    );
-    if (serverOrApiWithoutDate) {
-      alert("Server yoki API xizmati uchun boshlanish sanasini (kun, oy, yil) kiriting.");
-      return;
-    }
-    const inv = await createInvoice.mutateAsync({
-      projectId,
-      invoiceNumber: nextInvoiceNumber || "INV-AUTO",
-      amount: String(totalFromRows || 0),
-      dueDate: new Date(formData.get("dueDate") as string),
-      currency: (formData.get("currency") as string) || "UZS",
-      status: (formData.get("status") as string) || "unpaid",
-      paymentTerms: (formData.get("paymentTerms") as string) || undefined,
-      clientName: (formData.get("clientName") as string) || undefined,
-      company: (formData.get("company") as string) || undefined,
-      billToContact: (formData.get("billToContact") as string) || undefined,
-    });
-    for (const row of invoiceRows.filter((r) => r.title.trim())) {
-      await fetch(`/api/invoices/${inv.id}/items`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: row.title,
-          quantity: row.quantity || 1,
-          unitPrice: String(row.unitPrice),
-          ...(row.serviceType && { serviceType: row.serviceType }),
-          ...(row.startDate && { startDate: row.startDate }),
-        }),
-        credentials: "include",
-      });
-    }
-    setInvoiceRows([{ title: "", quantity: 1, unitPrice: "" }] as InvoiceRow[]);
-    setIsInvDialogOpen(false);
-  };
-
   const handleDownloadPdf = useCallback(
     async (inv: {
       id: number;
@@ -471,6 +413,64 @@ export default function Invoices() {
     },
     [projects, invoiceSettings]
   );
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <LoadingSpinner message="Hisob-fakturalar yuklanmoqda..." />
+      </AppLayout>
+    );
+  }
+
+  const totalFromRows = invoiceRows.reduce(
+    (s, r) => s + (Number(r.quantity) || 0) * (Number(r.unitPrice) || 0),
+    0
+  );
+
+  const handleCreateInvoice = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const projectId = Number(formData.get("projectId"));
+    if (!projectId || projectId < 1) {
+      alert("Iltimos, loyihani tanlang.");
+      return;
+    }
+    const serverOrApiWithoutDate = invoiceRows.some(
+      (r) => (r.serviceType === "server" || r.serviceType === "api") && r.title.trim() && !r.startDate
+    );
+    if (serverOrApiWithoutDate) {
+      alert("Server yoki API xizmati uchun boshlanish sanasini (kun, oy, yil) kiriting.");
+      return;
+    }
+    const inv = await createInvoice.mutateAsync({
+      projectId,
+      invoiceNumber: nextInvoiceNumber || "INV-AUTO",
+      amount: String(totalFromRows || 0),
+      dueDate: new Date(formData.get("dueDate") as string),
+      currency: (formData.get("currency") as string) || "UZS",
+      status: (formData.get("status") as string) || "unpaid",
+      paymentTerms: (formData.get("paymentTerms") as string) || undefined,
+      clientName: (formData.get("clientName") as string) || undefined,
+      company: (formData.get("company") as string) || undefined,
+      billToContact: (formData.get("billToContact") as string) || undefined,
+    });
+    for (const row of invoiceRows.filter((r) => r.title.trim())) {
+      await fetch(`/api/invoices/${inv.id}/items`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: row.title,
+          quantity: row.quantity || 1,
+          unitPrice: String(row.unitPrice),
+          ...(row.serviceType && { serviceType: row.serviceType }),
+          ...(row.startDate && { startDate: row.startDate }),
+        }),
+        credentials: "include",
+      });
+    }
+    setInvoiceRows([{ title: "", quantity: 1, unitPrice: "" }] as InvoiceRow[]);
+    setIsInvDialogOpen(false);
+  };
 
   return (
     <AppLayout>
