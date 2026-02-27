@@ -101,11 +101,12 @@
   font-size: 8pt;
 }
 
-/* Table — bounded, compact */
+/* Table — bounded, compact (no overflow:hidden — kesilmasin) */
 .invoice-pdf-a4__table-wrap {
   width: 100%;
   max-width: 100%;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: visible;
   margin-bottom: 8pt;
   border: 1px solid #e2e8f0;
   border-radius: 4pt;

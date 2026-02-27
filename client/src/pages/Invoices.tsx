@@ -382,7 +382,7 @@ export default function Invoices() {
         const pdfFilename = filename.endsWith(".pdf") ? filename : `${filename}.pdf`;
 
         const container = document.createElement("div");
-        container.style.cssText = "position:fixed;left:-9999px;top:0;width:794px;z-index:-1;";
+        container.style.cssText = "position:fixed;left:-9999px;top:0;width:794px;overflow:visible;z-index:-1;";
         document.body.appendChild(container);
         const root = createRoot(container);
         root.render(
