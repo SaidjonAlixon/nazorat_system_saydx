@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { createRoot } from "react-dom/client";
 import { AppLayout } from "@/components/layout/AppLayout";
 import {
   useInvoices,
@@ -10,7 +9,6 @@ import {
   useAddInvoiceItem,
   useDeleteInvoiceItem,
 } from "@/hooks/use-finance";
-import { InvoicePdfContent } from "@/components/InvoicePdfContent";
 import { generateInvoicePdf } from "@/lib/generate-invoice-pdf";
 import { useProjects } from "@/hooks/use-projects";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
@@ -381,29 +379,16 @@ export default function Invoices() {
         const filename = inv.invoiceNumber.replace(/[^a-zA-Z0-9\-_.]/g, "_") || `INV-${String(inv.id).padStart(6, "0")}`;
         const pdfFilename = filename.endsWith(".pdf") ? filename : `${filename}.pdf`;
 
-        const container = document.createElement("div");
-        container.style.cssText = "position:fixed;left:-9999px;top:0;width:210mm;overflow:visible;z-index:-1;";
-        document.body.appendChild(container);
-        const root = createRoot(container);
-        root.render(
-          <InvoicePdfContent
-            invoice={inv}
-            items={items}
-            projectName={projectName}
-            settings={settings}
-            paymentDetailLines={settings?.paymentDetailLines}
-          />
+        await generateInvoicePdf(
+          {
+            invoice: inv,
+            items,
+            projectName,
+            settings,
+            paymentDetailLines: settings?.paymentDetailLines,
+          },
+          pdfFilename
         );
-
-        await new Promise((r) => requestAnimationFrame(() => setTimeout(r, 350)));
-        const el = container.querySelector(".invoice-pdf-content") as HTMLElement;
-        if (el) {
-          await generateInvoicePdf(el, pdfFilename);
-        } else {
-          throw new Error("PDF element not found");
-        }
-        root.unmount();
-        document.body.removeChild(container);
       } catch (e) {
         console.error(e);
         alert(e instanceof Error ? e.message : "PDF yuklanmadi");
