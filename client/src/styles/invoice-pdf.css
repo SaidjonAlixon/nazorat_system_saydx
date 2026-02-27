@@ -48,15 +48,9 @@
 }
 
 .invoice-pdf-a4__logo {
-  height: 44pt;
+  height: 72pt;
   width: auto;
   max-width: 100%;
-}
-
-.invoice-pdf-a4__brand {
-  font-size: 18pt;
-  font-weight: 700;
-  color: #0ea5e9;
 }
 
 .invoice-pdf-a4__title {
@@ -91,7 +85,7 @@
 
 .invoice-pdf-a4__block-title {
   font-size: 8pt;
-  font-weight: 600;
+  font-weight: 700;
   color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.5pt;
@@ -264,6 +258,8 @@
   text-align: right;
   font-size: 9pt;
   color: #475569;
+  margin-left: 12pt;
+  margin-top: 8pt;
 }
 
 .invoice-pdf-a4__signature img {
