@@ -67,7 +67,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createClient(client: InsertClient): Promise<Client> {
-    const [newClient] = await db.insert(clients).values(client).returning();
+    const rows = await db.insert(clients).values(client).returning();
+    const newClient = rows[0];
+    if (!newClient) throw new Error("Failed to create client");
     return newClient;
   }
 
@@ -76,7 +78,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCompany(company: InsertCompany): Promise<Company> {
-    const [newCompany] = await db.insert(companies).values(company).returning();
+    const rows = await db.insert(companies).values(company).returning();
+    const newCompany = rows[0];
+    if (!newCompany) throw new Error("Failed to create company");
     return newCompany;
   }
 
@@ -91,12 +95,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProject(project: InsertProject): Promise<Project> {
-    const [newProject] = await db.insert(projects).values(project).returning();
+    const rows = await db.insert(projects).values(project).returning();
+    const newProject = rows[0];
+    if (!newProject) throw new Error("Failed to create project");
     return newProject;
   }
 
   async updateProject(id: number, updates: UpdateProjectRequest): Promise<Project> {
-    const [updated] = await db.update(projects).set(updates).where(eq(projects.id, id)).returning();
+    const rows = await db.update(projects).set(updates).where(eq(projects.id, id)).returning();
+    const updated = rows[0];
+    if (!updated) throw new Error("Project not found");
     return updated;
   }
 
@@ -111,12 +119,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTask(task: InsertTask): Promise<Task> {
-    const [newTask] = await db.insert(tasks).values(task).returning();
+    const rows = await db.insert(tasks).values(task).returning();
+    const newTask = rows[0];
+    if (!newTask) throw new Error("Failed to create task");
     return newTask;
   }
 
   async updateTask(id: number, updates: UpdateTaskRequest): Promise<Task> {
-    const [updated] = await db.update(tasks).set(updates).where(eq(tasks.id, id)).returning();
+    const rows = await db.update(tasks).set(updates).where(eq(tasks.id, id)).returning();
+    const updated = rows[0];
+    if (!updated) throw new Error("Task not found");
     return updated;
   }
 
@@ -127,8 +139,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTimeEntry(entry: InsertTimeEntry): Promise<TimeEntry> {
-    const [newEntry] = await db.insert(timeEntries).values(entry).returning();
-    const task = await db.select().from(tasks).where(eq(tasks.id, entry.taskId)).then(res => res[0]);
+    const rows = await db.insert(timeEntries).values(entry).returning();
+    const newEntry = rows[0];
+    if (!newEntry) throw new Error("Failed to create time entry");
+    const [task] = await db.select().from(tasks).where(eq(tasks.id, entry.taskId)).limit(1);
     if (task) {
       await db.update(tasks).set({ loggedMinutes: task.loggedMinutes + entry.durationMinutes }).where(eq(tasks.id, entry.taskId));
     }
@@ -146,7 +160,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTransaction(transaction: InsertTransaction): Promise<Transaction> {
-    const [newTx] = await db.insert(transactions).values(transaction).returning();
+    const rows = await db.insert(transactions).values(transaction).returning();
+    const newTx = rows[0];
+    if (!newTx) throw new Error("Failed to create transaction");
     return newTx;
   }
 
@@ -181,13 +197,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createInvoice(invoice: InsertInvoice): Promise<Invoice> {
-    const [newInvoice] = await db.insert(invoices).values(invoice).returning();
+    const rows = await db.insert(invoices).values(invoice).returning();
+    const newInvoice = rows[0];
+    if (!newInvoice) throw new Error("Failed to create invoice");
     return newInvoice;
   }
 
   async updateInvoice(id: number, updates: { status?: string; amount?: string; pdfUrl?: string }): Promise<Invoice | undefined> {
-    const [updated] = await db.update(invoices).set(updates).where(eq(invoices.id, id)).returning();
-    return updated;
+    const rows = await db.update(invoices).set(updates).where(eq(invoices.id, id)).returning();
+    return rows[0];
   }
 
   async getInvoiceItems(invoiceId: number): Promise<InvoiceItem[]> {
@@ -195,7 +213,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createInvoiceItem(item: InsertInvoiceItem): Promise<InvoiceItem> {
-    const [row] = await db.insert(invoiceItems).values(item).returning();
+    const rows = await db.insert(invoiceItems).values(item).returning();
+    const row = rows[0];
+    if (!row) throw new Error("Failed to create invoice item");
     return row;
   }
 
@@ -229,10 +249,12 @@ export class DatabaseStorage implements IStorage {
       updatedAt: new Date(),
     };
     if (existing) {
-      const [updated] = await db.update(invoiceSettings).set(payload).where(eq(invoiceSettings.id, existing.id)).returning();
+      const rows = await db.update(invoiceSettings).set(payload).where(eq(invoiceSettings.id, existing.id)).returning();
+      const updated = rows[0];
+      if (!updated) throw new Error("Failed to update invoice settings");
       return updated;
     }
-    const [inserted] = await db.insert(invoiceSettings).values({
+    const insertRows = await db.insert(invoiceSettings).values({
       companyName: data.companyName ?? "SAYD.X LLC",
       address: data.address ?? "Toshkent, O'zbekiston",
       phone: data.phone ?? "+998 90 000 00 00",
@@ -245,6 +267,8 @@ export class DatabaseStorage implements IStorage {
       authorizedName: data.authorizedName ?? "Authorized Name",
       authorizedPosition: data.authorizedPosition ?? "Position",
     }).returning();
+    const inserted = insertRows[0];
+    if (!inserted) throw new Error("Failed to insert invoice settings");
     return inserted;
   }
 

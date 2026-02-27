@@ -1,5 +1,5 @@
 import { sql, relations } from "drizzle-orm";
-import { pgTable, text, serial, integer, boolean, timestamp, numeric, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, numeric, varchar, foreignKey } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -51,21 +51,31 @@ export const projects = pgTable("projects", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const tasks = pgTable("tasks", {
-  id: serial("id").primaryKey(),
-  projectId: integer("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
-  parentTaskId: integer("parent_task_id").references(() => tasks.id, { onDelete: "cascade" }),
-  title: text("title").notNull(),
-  description: text("description"),
-  priority: text("priority").default("medium").notNull(), // low, medium, high
-  status: text("status").default("todo").notNull(), // todo, in progress, done
-  loggedMinutes: integer("logged_minutes").default(0).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  inProgressStartedAt: timestamp("in_progress_started_at"),
-  completedAt: timestamp("completed_at"),
-  dueDate: timestamp("due_date"),
-  reopenComment: text("reopen_comment"),
-});
+export const tasks = pgTable(
+  "tasks",
+  {
+    id: serial("id").primaryKey(),
+    projectId: integer("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+    parentTaskId: integer("parent_task_id"),
+    title: text("title").notNull(),
+    description: text("description"),
+    priority: text("priority").default("medium").notNull(), // low, medium, high
+    status: text("status").default("todo").notNull(), // todo, in progress, done
+    loggedMinutes: integer("logged_minutes").default(0).notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    inProgressStartedAt: timestamp("in_progress_started_at"),
+    completedAt: timestamp("completed_at"),
+    dueDate: timestamp("due_date"),
+    reopenComment: text("reopen_comment"),
+  },
+  (table) => ({
+    parentTaskFk: foreignKey({
+      columns: [table.parentTaskId],
+      foreignColumns: [table.id],
+      name: "tasks_parent_task_id_fkey",
+    }).onDelete("cascade"),
+  })
+);
 
 export const timeEntries = pgTable("time_entries", {
   id: serial("id").primaryKey(),
