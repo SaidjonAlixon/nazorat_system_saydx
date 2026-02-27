@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getCurrency } from "./_lib";
+import { getCurrency } from "./lib";
 
 /**
  * GET /api/currency-rate

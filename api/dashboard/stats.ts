@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { storage, toUzs, getCurrency } from "../_lib";
+import { storage, toUzs, getCurrency } from "../lib";
 
 /**
  * GET /api/dashboard/stats

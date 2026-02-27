@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { storage } from "../_lib";
+import { storage } from "../lib";
 
 /**
  * GET /api/invoices/next-number
