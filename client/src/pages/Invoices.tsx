@@ -190,7 +190,7 @@ function InvoiceSettingsForm({
   );
 }
 
-function InvoiceItemsDialog({ invId, onClose }: { invId: number | null; onClose: () => void }) {
+function InvoiceItemsDialog({ invId, onClose, projects }: { invId: number | null; onClose: () => void; projects?: { id: number; name: string }[] }) {
   const { data: items = [] } = useInvoiceItems(invId);
   const addItem = useAddInvoiceItem(invId ?? 0);
   const deleteItem = useDeleteInvoiceItem(invId ?? 0);
@@ -198,7 +198,8 @@ function InvoiceItemsDialog({ invId, onClose }: { invId: number | null; onClose:
   const [quantity, setQuantity] = useState(1);
   const [unitPrice, setUnitPrice] = useState("");
   const [startDate, setStartDate] = useState("");
-  const serviceType = title.toLowerCase() === "server" ? "server" : title.toLowerCase() === "api" ? "api" : undefined;
+  const [projectId, setProjectId] = useState<number | undefined>();
+  const serviceType = title.toLowerCase() === "server" ? "server" : title.toLowerCase() === "api" ? "api" : "row";
 
   if (invId == null) return null;
   return (
@@ -231,13 +232,25 @@ function InvoiceItemsDialog({ invId, onClose }: { invId: number | null; onClose:
               onChange={(e) => setUnitPrice(e.target.value)}
             />
             {(title.toLowerCase() === "server" || title.toLowerCase() === "api") && (
-              <Input
-                type="date"
-                className="w-40 glass-input text-white date-picker-white-icon"
-                placeholder="Boshlanish"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
+              <>
+                <select
+                  className="w-36 glass-input p-2 rounded-md text-white"
+                  value={projectId ?? ""}
+                  onChange={(e) => setProjectId(e.target.value ? Number(e.target.value) : undefined)}
+                >
+                  <option value="" className="text-black">Loyiha</option>
+                  {projects?.map((p) => (
+                    <option key={p.id} value={p.id} className="text-black">{p.name}</option>
+                  ))}
+                </select>
+                <Input
+                  type="date"
+                  className="w-40 glass-input text-white date-picker-white-icon"
+                  placeholder="Boshlanish"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </>
             )}
             <Button
               size="sm"
@@ -249,8 +262,9 @@ function InvoiceItemsDialog({ invId, onClose }: { invId: number | null; onClose:
                     title: title.trim(),
                     quantity,
                     unitPrice,
-                    ...(serviceType && { serviceType }),
+                    serviceType,
                     ...(startDate && { startDate }),
+                    ...(projectId && { projectId }),
                   },
                   {
                     onSuccess: () => {
@@ -258,6 +272,7 @@ function InvoiceItemsDialog({ invId, onClose }: { invId: number | null; onClose:
                       setQuantity(1);
                       setUnitPrice("");
                       setStartDate("");
+                      setProjectId(undefined);
                     },
                   }
                 );
@@ -301,7 +316,7 @@ export default function Invoices() {
   const [formCurrency, setFormCurrency] = useState<"UZS" | "USD">("UZS");
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false);
-  type InvoiceRow = { title: string; quantity: number; unitPrice: string; serviceType?: "server" | "api"; startDate?: string };
+  type InvoiceRow = { title: string; quantity: number; unitPrice: string; serviceType?: "row" | "server" | "api"; startDate?: string; projectId?: number };
   const [invoiceRows, setInvoiceRows] = useState<InvoiceRow[]>([{ title: "", quantity: 1, unitPrice: "" }]);
   const [itemsDialogInvId, setItemsDialogInvId] = useState<number | null>(null);
 
@@ -365,6 +380,9 @@ export default function Invoices() {
       billToContact?: string | null;
       paymentTerms?: string | null;
       projectId?: number | null;
+      contractPartner?: string | null;
+      contractStartDate?: string | Date | null;
+      contractEndDate?: string | Date | null;
     }) => {
       setPdfGeneratingId(inv.id);
       try {
@@ -372,7 +390,11 @@ export default function Invoices() {
           fetch(`/api/invoices/${inv.id}/items`, { credentials: "include" }),
           fetch("/api/settings/invoice", { credentials: "include" }),
         ]);
-        const items: { title: string; quantity: number; unitPrice: string }[] = itemsRes.ok ? await itemsRes.json() : [];
+        const rawItems: { title: string; quantity: number; unitPrice: string; serviceType?: string | null; startDate?: string | null; projectId?: number | null }[] = itemsRes.ok ? await itemsRes.json() : [];
+        const items = rawItems.map((item) => ({
+          ...item,
+          projectName: item.projectId ? projects?.find((p) => p.id === item.projectId)?.name ?? null : null,
+        }));
         const settings = settingsRes.ok ? await settingsRes.json() : invoiceSettings;
         const projectName = projects?.find((p) => p.id === inv.projectId)?.name;
         const fname = inv.invoiceNumber.replace(/[^a-zA-Z0-9\-_.]/g, "_") || `INV-${String(inv.id).padStart(6, "0")}`;
@@ -425,11 +447,20 @@ export default function Invoices() {
       amount: String(totalFromRows || 0),
       dueDate: new Date(formData.get("dueDate") as string),
       currency: (formData.get("currency") as string) || "UZS",
-      status: (formData.get("status") as string) || "unpaid",
+      status: ((formData.get("status") as string) || "pending") as "paid" | "pending" | "unpaid",
       paymentTerms: (formData.get("paymentTerms") as string) || undefined,
       clientName: (formData.get("clientName") as string) || undefined,
       company: (formData.get("company") as string) || undefined,
       billToContact: (formData.get("billToContact") as string) || undefined,
+      contractPartner: (formData.get("contractPartner") as string) || undefined,
+      contractStartDate: (() => {
+        const s = formData.get("contractStartDate") as string;
+        return s ? new Date(s) : undefined;
+      })(),
+      contractEndDate: (() => {
+        const s = formData.get("contractEndDate") as string;
+        return s ? new Date(s) : undefined;
+      })(),
     });
     for (const row of invoiceRows.filter((r) => r.title.trim())) {
       await fetch(`/api/invoices/${inv.id}/items`, {
@@ -439,8 +470,9 @@ export default function Invoices() {
           title: row.title,
           quantity: row.quantity || 1,
           unitPrice: String(row.unitPrice),
-          ...(row.serviceType && { serviceType: row.serviceType }),
+          serviceType: row.serviceType ?? "row",
           ...(row.startDate && { startDate: row.startDate }),
+          ...(row.projectId && { projectId: row.projectId }),
         }),
         credentials: "include",
       });
@@ -623,8 +655,9 @@ export default function Invoices() {
               <div>
                 <label className="text-sm text-white/70 block mb-1">Holat (Status)</label>
                 <select name="status" className="w-full glass-input p-2 rounded-md text-white">
-                  <option value="unpaid" className="text-black">Kutilmoqda</option>
-                  <option value="paid" className="text-black">To'langan</option>
+                  <option value="pending" className="text-black">Kutilmoqda (sariq)</option>
+                  <option value="paid" className="text-black">To'langan (yashil)</option>
+                  <option value="unpaid" className="text-black">To'lanmadi (qizil)</option>
                 </select>
               </div>
               <div>
@@ -656,6 +689,25 @@ export default function Invoices() {
                 <Input name="dueDate" type="date" required className="glass-input text-white date-picker-white-icon" />
               </div>
               <div className="border-t border-white/10 pt-4 mt-2">
+                <div className="text-sm text-white/80 font-medium mb-2">Shartnoma ma'lumotlari</div>
+                <div className="space-y-2">
+                  <div>
+                    <label className="text-xs text-white/60 block mb-1">Kim bn (Shartnoma tuzilgan tomon)</label>
+                    <Input name="contractPartner" className="glass-input text-white" placeholder="Mijoz / kompaniya nomi" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-xs text-white/60 block mb-1">Boshlanish (qachon)</label>
+                      <Input name="contractStartDate" type="date" className="glass-input text-white date-picker-white-icon" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-white/60 block mb-1">Tugash (qanchaga)</label>
+                      <Input name="contractEndDate" type="date" className="glass-input text-white date-picker-white-icon" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="border-t border-white/10 pt-4 mt-2">
                 <div className="text-sm text-white/80 font-medium mb-2">BILL TO (Kimga)</div>
                 <div className="space-y-2">
                   <div>
@@ -681,7 +733,7 @@ export default function Invoices() {
                     size="sm"
                     className="border-white/20 text-white"
                     onClick={() =>
-                      setInvoiceRows((r) => [...r, { title: "", quantity: 1, unitPrice: "" }])
+                      setInvoiceRows((r) => [...r, { title: "", quantity: 1, unitPrice: "", serviceType: "row" }])
                     }
                   >
                     <Plus className="w-4 h-4 mr-1" /> Qator
@@ -692,7 +744,7 @@ export default function Invoices() {
                     size="sm"
                     className="border-white/20 text-white"
                     onClick={() =>
-                      setInvoiceRows((r) => [...r, { title: "Server", quantity: 1, unitPrice: "", serviceType: "server", startDate: "" }])
+                      setInvoiceRows((r) => [...r, { title: "Server", quantity: 1, unitPrice: "", serviceType: "server", startDate: "", projectId: undefined }])
                     }
                   >
                     <Plus className="w-4 h-4 mr-1" /> Server
@@ -703,7 +755,7 @@ export default function Invoices() {
                     size="sm"
                     className="border-white/20 text-white"
                     onClick={() =>
-                      setInvoiceRows((r) => [...r, { title: "API", quantity: 1, unitPrice: "", serviceType: "api", startDate: "" }])
+                      setInvoiceRows((r) => [...r, { title: "API", quantity: 1, unitPrice: "", serviceType: "api", startDate: "", projectId: undefined }])
                     }
                   >
                     <Plus className="w-4 h-4 mr-1" /> API
@@ -767,7 +819,22 @@ export default function Invoices() {
                   </div>
                   {(row.serviceType === "server" || row.serviceType === "api") && (
                     <div className="grid grid-cols-12 gap-2 items-center pl-2 border-l-2 border-primary/30">
-                      <label className="col-span-12 sm:col-span-2 text-xs text-white/70">Boshlanish sanasi (kun.oy.yil)</label>
+                      <label className="col-span-12 sm:col-span-2 text-xs text-white/70">Loyiha (qaysi uchun)</label>
+                      <select
+                        className="col-span-12 sm:col-span-4 glass-input p-2 rounded-md text-white"
+                        value={row.projectId ?? ""}
+                        onChange={(e) =>
+                          setInvoiceRows((r) =>
+                            r.map((x, j) => (j === i ? { ...x, projectId: e.target.value ? Number(e.target.value) : undefined } : x))
+                          )
+                        }
+                      >
+                        <option value="" className="text-black">Tanlang...</option>
+                        {projects?.map((p) => (
+                          <option key={p.id} value={p.id} className="text-black">{p.name}</option>
+                        ))}
+                      </select>
+                      <label className="col-span-12 sm:col-span-2 text-xs text-white/70">Boshlanish sanasi</label>
                       <Input
                         type="date"
                         className="col-span-12 sm:col-span-4 glass-input text-white date-picker-white-icon"
@@ -805,7 +872,7 @@ export default function Invoices() {
         </div>
       </div>
 
-      <InvoiceItemsDialog invId={itemsDialogInvId} onClose={() => setItemsDialogInvId(null)} />
+      <InvoiceItemsDialog invId={itemsDialogInvId} onClose={() => setItemsDialogInvId(null)} projects={projects} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {invoices?.map((inv) => (
@@ -821,10 +888,12 @@ export default function Invoices() {
                 className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
                   inv.status === "paid"
                     ? "bg-emerald-500/20 text-emerald-400"
-                    : "bg-orange-500/20 text-orange-400"
+                    : inv.status === "pending"
+                    ? "bg-amber-500/20 text-amber-400"
+                    : "bg-red-500/20 text-red-400"
                 }`}
               >
-                {inv.status === "paid" ? "To'langan" : "Kutilmoqda"}
+                {inv.status === "paid" ? "To'langan" : inv.status === "pending" ? "Kutilmoqda" : "To'lanmadi"}
               </span>
             </div>
             <h3 className="text-xl font-bold text-white mb-1">{inv.invoiceNumber}</h3>
@@ -847,15 +916,16 @@ export default function Invoices() {
                 Muddat: {format(new Date(inv.dueDate), "dd.MM.yyyy")}
               </div>
               <div className="flex gap-2">
-                {inv.status !== "paid" && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/20"
-                    onClick={() => updateInvoice.mutate({ id: inv.id, status: "paid" })}
-                  >
-                    To'langan
-                  </Button>
+                {(inv.status === "pending" || inv.status === "unpaid") && (
+<select
+                  value={inv.status}
+                  onChange={(e) => updateInvoice.mutate({ id: inv.id, status: e.target.value })}
+                  className="text-xs bg-white/5 border border-white/20 rounded px-2 py-1 text-white"
+                >
+                  <option value="paid" className="text-black">To'langan</option>
+                  <option value="pending" className="text-black">Kutilmoqda</option>
+                  <option value="unpaid" className="text-black">To'lanmadi</option>
+                </select>
                 )}
                 <Button
                   variant="ghost"

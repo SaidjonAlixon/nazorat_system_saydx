@@ -26,6 +26,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           dueDate: z
             .union([z.string(), z.date(), z.number()])
             .transform((v) => new Date(v)),
+          status: z.enum(["paid", "pending", "unpaid"]).optional(),
+          contractPartner: z.string().optional(),
+          contractStartDate: z
+            .union([z.string(), z.date(), z.number()])
+            .optional()
+            .transform((v) => (v ? new Date(v) : undefined)),
+          contractEndDate: z
+            .union([z.string(), z.date(), z.number()])
+            .optional()
+            .transform((v) => (v ? new Date(v) : undefined)),
         })
         .parse(req.body);
       const projectId = Number(input.projectId);

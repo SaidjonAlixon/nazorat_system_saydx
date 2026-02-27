@@ -375,6 +375,10 @@ export async function registerRoutes(
         invoiceNumber: z.string().optional(),
         amount: z.union([z.string(), z.number()]).transform(v => String(v)),
         dueDate: z.union([z.string(), z.date(), z.number()]).transform(v => new Date(v)),
+        status: z.enum(["paid", "pending", "unpaid"]).optional(),
+        contractPartner: z.string().optional(),
+        contractStartDate: z.union([z.string(), z.date(), z.number()]).optional().transform(v => v ? new Date(v) : undefined),
+        contractEndDate: z.union([z.string(), z.date(), z.number()]).optional().transform(v => v ? new Date(v) : undefined),
       }).parse(req.body);
       const projectId = Number(input.projectId);
       if (!projectId || projectId < 1) {
@@ -427,8 +431,9 @@ export async function registerRoutes(
         title: z.string(),
         quantity: z.coerce.number().default(1),
         unitPrice: z.union([z.string(), z.number()]).transform(v => String(v)),
-        serviceType: z.enum(["server", "api"]).optional(),
+        serviceType: z.enum(["row", "server", "api"]).optional(),
         startDate: z.union([z.string(), z.date()]).optional().transform(v => v ? new Date(v) : undefined),
+        projectId: z.coerce.number().optional(),
       }).parse(req.body);
       const invId = Number(req.params.id);
       const item = await storage.createInvoiceItem({
@@ -436,8 +441,9 @@ export async function registerRoutes(
         title: body.title,
         quantity: body.quantity,
         unitPrice: body.unitPrice,
-        serviceType: body.serviceType ?? null,
+        serviceType: body.serviceType ?? "row",
         startDate: body.startDate ?? null,
+        projectId: body.projectId ?? null,
       });
       const items = await storage.getInvoiceItems(invId);
       const total = items.reduce((s, i) => s + Number(i.quantity) * Number(i.unitPrice), 0);

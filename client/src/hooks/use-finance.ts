@@ -107,7 +107,7 @@ export function useInvoiceItems(invoiceId: number | null) {
 export function useAddInvoiceItem(invoiceId: number) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { title: string; quantity: number; unitPrice: string; serviceType?: "server" | "api"; startDate?: string }) => {
+    mutationFn: async (data: { title: string; quantity: number; unitPrice: string; serviceType?: "row" | "server" | "api"; startDate?: string; projectId?: number }) => {
       const res = await fetch(`/api/invoices/${invoiceId}/items`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

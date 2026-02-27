@@ -4,11 +4,11 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // --- Export models from integrations ---
-export * from "./models/auth.js";
-export * from "./models/chat.js";
+export * from "./models/auth";
+export * from "./models/chat";
 
 // We need to import users to use them in relations
-import { users } from "./models/auth.js";
+import { users } from "./models/auth";
 
 // --- Application Tables ---
 
@@ -102,14 +102,20 @@ export const invoices = pgTable("invoices", {
   projectId: integer("project_id").notNull().references(() => projects.id),
   invoiceNumber: text("invoice_number").notNull(),
   amount: numeric("amount").notNull(),
-  currency: text("currency").default("UZS").notNull(),
-  status: text("status").default("unpaid").notNull(), // paid, unpaid, partial
+  currency: text("currency").default("UZS").notNull(), // USD | UZS — aniq
+  status: text("status").default("pending").notNull(), // paid | pending | unpaid — To'langan | Kutilmoqda | To'lanmadi
   dueDate: timestamp("due_date").notNull(),
   pdfUrl: text("pdf_url"),
-  paymentTerms: text("payment_terms"), // To'lov shartlari, masalan "7 kun ichida"
-  clientName: text("client_name"), // Mijoz ismi (BILL TO)
-  company: text("company"), // Kompaniya (BILL TO)
-  billToContact: text("bill_to_contact"), // Manzil, tel, email (BILL TO)
+  paymentTerms: text("payment_terms"),
+  clientName: text("client_name"),
+  company: text("company"),
+  billToContact: text("bill_to_contact"),
+  /** Shartnoma: kim bn (qaysi mijoz/kompaniya) */
+  contractPartner: text("contract_partner"),
+  /** Shartnoma: boshlanish sanasi (qachon) */
+  contractStartDate: timestamp("contract_start_date"),
+  /** Shartnoma: tugash sanasi (qanchaga) */
+  contractEndDate: timestamp("contract_end_date"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -119,10 +125,12 @@ export const invoiceItems = pgTable("invoice_items", {
   title: text("title").notNull(),
   quantity: integer("quantity").default(1).notNull(),
   unitPrice: numeric("unit_price").notNull(),
-  /** server | api — oylik xizmat; bo'lsa startDate dan boshlab har oy PDF da ko'rsatiladi */
-  serviceType: text("service_type"),
-  /** Server/API xizmat qaysi kundan boshlanishi (kun, oy, yil) */
+  /** row | server | api — 3 xil xizmat, PDFda 3 xil jadval */
+  serviceType: text("service_type").default("row"),
+  /** Server/API: boshlanish sanasi, quantity = necha oy, qolgan oy hisoblanadi */
   startDate: timestamp("start_date"),
+  /** Server/API: qaysi loyiha uchun (projectId) */
+  projectId: integer("project_id").references(() => projects.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

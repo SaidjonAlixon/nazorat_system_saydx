@@ -6,14 +6,18 @@ const PAGE_W = 210;
 const PAGE_H = 297;
 const CONTENT_W = PAGE_W - MARGIN * 2;
 
-// Modern SaaS colors
-const TEXT: [number, number, number] = [17, 17, 17]; // #111
-const TEXT_MUTED: [number, number, number] = [85, 85, 85]; // #555
-const TEXT_LIGHT: [number, number, number] = [136, 136, 136]; // #888
-const ACCENT: [number, number, number] = [37, 99, 235]; // #2563eb
+// Ranglar: yashil, sariq, qizil — status uchun
+const GREEN: [number, number, number] = [34, 197, 94]; // #22c55e
+const YELLOW: [number, number, number] = [234, 179, 8]; // #eab308
+const RED: [number, number, number] = [239, 68, 68]; // #ef4444
+
+const TEXT: [number, number, number] = [17, 17, 17];
+const TEXT_MUTED: [number, number, number] = [85, 85, 85];
+const TEXT_LIGHT: [number, number, number] = [136, 136, 136];
+const ACCENT: [number, number, number] = [37, 99, 235];
 const BORDER: [number, number, number] = [229, 231, 235];
 const BG_SUBTLE: [number, number, number] = [249, 250, 251];
-const BG_CARD: [number, number, number] = [248, 250, 252]; // ochiq kulrang
+const BG_CARD: [number, number, number] = [248, 250, 252];
 
 const S8 = 3;
 const S16 = 6;
@@ -34,6 +38,16 @@ export type InvoiceSettingsType = {
   authorizedPosition: string;
 };
 
+export type InvoiceItemPdf = {
+  title: string;
+  quantity: number;
+  unitPrice: string;
+  serviceType?: string | null;
+  startDate?: string | Date | null;
+  projectId?: number | null;
+  projectName?: string | null;
+};
+
 export type InvoicePdfData = {
   invoice: {
     id: number;
@@ -47,8 +61,11 @@ export type InvoicePdfData = {
     company?: string | null;
     billToContact?: string | null;
     paymentTerms?: string | null;
+    contractPartner?: string | null;
+    contractStartDate?: string | Date | null;
+    contractEndDate?: string | Date | null;
   };
-  items: { title: string; quantity: number; unitPrice: string }[];
+  items: InvoiceItemPdf[];
   projectName?: string;
   settings: InvoiceSettingsType;
   paymentDetailLines?: PaymentDetailLine[];
@@ -61,6 +78,17 @@ const dateStr = (d: Date | string) =>
   new Date(d)
     .toLocaleDateString("uz-UZ", { day: "2-digit", month: "2-digit", year: "numeric" })
     .replace(/\//g, ".");
+
+/** Qolgan oylar: startDate + quantity oydan keyin tugaydi, bugundan qolgan oylar */
+function remainingMonths(startDate: Date | string, quantityMonths: number): number {
+  const start = new Date(startDate);
+  const end = new Date(start);
+  end.setMonth(end.getMonth() + quantityMonths);
+  const now = new Date();
+  if (end <= now) return 0;
+  const months = (end.getFullYear() - now.getFullYear()) * 12 + (end.getMonth() - now.getMonth());
+  return Math.max(0, months);
+}
 
 async function loadImageAsBase64(url: string): Promise<string> {
   const res = await fetch(url);
@@ -85,9 +113,28 @@ async function getImageSize(dataUrl: string): Promise<{ w: number; h: number }> 
   });
 }
 
-/**
- * Modern SaaS-style invoice PDF — A4, 15mm margins, multi-page.
- */
+function drawStatusBadge(
+  doc: jsPDF,
+  x: number,
+  y: number,
+  status: string | null | undefined
+): void {
+  const [label, r, g, b] =
+    status === "paid"
+      ? ["To'langan", ...GREEN]
+      : status === "pending"
+      ? ["Kutilmoqda", ...YELLOW]
+      : ["To'lanmadi", ...RED];
+  doc.setFillColor(r, g, b);
+  doc.setDrawColor(r, g, b);
+  doc.setLineWidth(0.15);
+  doc.roundedRect(x, y, 22, 6, 1, 1, "FD");
+  doc.setFontSize(5);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(255, 255, 255);
+  doc.text(label, x + 11, y + 4, { align: "center" });
+}
+
 export async function generateInvoicePdf(data: InvoicePdfData, filename: string): Promise<void> {
   const { invoice, items, projectName, settings, paymentDetailLines = [] } = data;
   const fname = filename.replace(/[^a-zA-Z0-9\-_.]/g, "_");
@@ -95,6 +142,10 @@ export async function generateInvoicePdf(data: InvoicePdfData, filename: string)
 
   const issueDate = new Date(invoice.createdAt);
   const validationId = `INV-${invoice.id.toString().padStart(6, "0")}`;
+
+  const rowItems = items.filter((i) => !i.serviceType || i.serviceType === "row");
+  const serverItems = items.filter((i) => i.serviceType === "server");
+  const apiItems = items.filter((i) => i.serviceType === "api");
 
   let subtotal = 0;
   items.forEach((item) => {
@@ -112,12 +163,10 @@ export async function generateInvoicePdf(data: InvoicePdfData, filename: string)
           { title: "Hisob raqami", value: settings.accountNumber },
         ];
 
-  const statusLabel = invoice.status === "paid" ? "To'langan" : "Kutilmoqda";
-
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
   let y = MARGIN;
 
-  // Header: logo left (to'g'ri o'lchamda), title right, thin divider
+  // Header
   try {
     const logoB64 = await loadImageAsBase64("/LOGO2.png");
     const dim = await getImageSize(logoB64);
@@ -139,15 +188,14 @@ export async function generateInvoicePdf(data: InvoicePdfData, filename: string)
   doc.line(MARGIN, y + 16, PAGE_W - MARGIN, y + 16);
   y += 20;
 
-  // Info grid (2 columns)
   const colW = (CONTENT_W - S16) / 2;
   const pad = 4;
 
+  // Info grid
   doc.setFillColor(BG_SUBTLE[0], BG_SUBTLE[1], BG_SUBTLE[2]);
   doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
-  doc.setLineWidth(0.1);
-  doc.roundedRect(MARGIN, y, colW, 28, 2, 2, "FD");
-  doc.roundedRect(MARGIN + colW + S16, y, colW, 28, 2, 2, "FD");
+  doc.roundedRect(MARGIN, y, colW, 32, 2, 2, "FD");
+  doc.roundedRect(MARGIN + colW + S16, y, colW, 32, 2, 2, "FD");
 
   doc.setFontSize(5);
   doc.setFont("helvetica", "bold");
@@ -167,16 +215,40 @@ export async function generateInvoicePdf(data: InvoicePdfData, filename: string)
   ]
     .filter(Boolean)
     .join("\n");
-  const rightInfo = [
-    `Holat: ${statusLabel}`,
-    `To'lov shartlari: ${invoice.paymentTerms || "7 kun ichida"}`,
-    `Valyuta: ${invoice.currency}`,
-  ].join("\n");
   doc.text(leftInfo, MARGIN + pad, y + 14);
-  doc.text(rightInfo, MARGIN + colW + S16 + pad, y + 14);
-  y += 32;
 
-  // Client grid — ochiq kulrang (qora emas)
+  doc.text("Holat:", MARGIN + colW + S16 + pad, y + 12);
+  drawStatusBadge(doc, MARGIN + colW + S16 + 20, y + 9, invoice.status);
+  doc.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
+  doc.text(`To'lov shartlari: ${invoice.paymentTerms || "7 kun ichida"}`, MARGIN + colW + S16 + pad, y + 20);
+  doc.text(`Valyuta: ${invoice.currency}`, MARGIN + colW + S16 + pad, y + 26);
+  y += 36;
+
+  // Shartnoma bo'yicha
+  const hasContract =
+    invoice.contractPartner || invoice.contractStartDate || invoice.contractEndDate;
+  if (hasContract) {
+    doc.setFillColor(BG_CARD[0], BG_CARD[1], BG_CARD[2]);
+    doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
+    doc.roundedRect(MARGIN, y, CONTENT_W, 18, 2, 2, "FD");
+    doc.setFontSize(5);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(TEXT_LIGHT[0], TEXT_LIGHT[1], TEXT_LIGHT[2]);
+    doc.text("SHARTNOMA MA'LUMOTLARI", MARGIN + pad, y + 5);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    doc.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
+    const contractParts: string[] = [];
+    if (invoice.contractPartner) contractParts.push(`Kim bn: ${invoice.contractPartner}`);
+    if (invoice.contractStartDate)
+      contractParts.push(`Boshlanish: ${dateStr(invoice.contractStartDate)}`);
+    if (invoice.contractEndDate) contractParts.push(`Tugash: ${dateStr(invoice.contractEndDate)}`);
+    contractParts.push(`Valyuta: ${invoice.currency}`);
+    doc.text(contractParts.join("  |  "), MARGIN + pad, y + 12);
+    y += 22;
+  }
+
+  // FROM / BILL TO
   doc.setFillColor(BG_CARD[0], BG_CARD[1], BG_CARD[2]);
   doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
   doc.roundedRect(MARGIN, y, colW, 30, 2, 2, "FD");
@@ -201,21 +273,8 @@ export async function generateInvoicePdf(data: InvoicePdfData, filename: string)
   );
   y += 34;
 
-  // Table: Service | Qty | Price | Total
-  const cw = [10, 72, 28, 28, 42];
-  const head = [["T/r", "Xizmat nomi", "Soni", "Narx", "Summa"]];
-  const body = items.map((item, i) => {
-    const sum = Number(item.quantity) * Number(item.unitPrice);
-    return [
-      String(i + 1),
-      item.title,
-      String(item.quantity),
-      formatNum(Number(item.unitPrice)),
-      formatNum(sum),
-    ];
-  });
-
-  autoTable(doc, {
+  const cw = [10, 60, 22, 28, 40];
+  const tableOpts = (head: string[][], body: (string | number)[][]) => ({
     head,
     body,
     startY: y,
@@ -224,32 +283,99 @@ export async function generateInvoicePdf(data: InvoicePdfData, filename: string)
     tableLineColor: BORDER as unknown as [number, number, number],
     tableLineWidth: 0.15,
     columnStyles: {
-      0: { cellWidth: cw[0], halign: "left", cellPadding: 3 },
-      1: { cellWidth: cw[1], halign: "left", cellPadding: 3 },
-      2: { cellWidth: cw[2], halign: "right", cellPadding: 3 },
-      3: { cellWidth: cw[3], halign: "right", cellPadding: 3 },
-      4: { cellWidth: cw[4], halign: "right", fontStyle: "bold", cellPadding: 3 },
+      0: { cellWidth: cw[0], halign: "left" as const, cellPadding: 2 },
+      1: { cellWidth: cw[1], halign: "left" as const, cellPadding: 2 },
+      2: { cellWidth: cw[2], halign: "right" as const, cellPadding: 2 },
+      3: { cellWidth: cw[3], halign: "right" as const, cellPadding: 2 },
+      4: { cellWidth: cw[4], halign: "right" as const, fontStyle: "bold" as const, cellPadding: 2 },
     },
     headStyles: {
       fillColor: ACCENT as unknown as [number, number, number],
-      textColor: [255, 255, 255],
-      fontStyle: "bold",
+      textColor: [255, 255, 255] as [number, number, number],
+      fontStyle: "bold" as const,
       fontSize: 6,
       cellPadding: 2,
     },
-    bodyStyles: {
-      fontSize: 7,
-      cellPadding: 4,
-      textColor: TEXT as unknown as [number, number, number],
-    },
-    alternateRowStyles: {
-      fillColor: BG_SUBTLE as unknown as [number, number, number],
-    },
-    showHead: "everyPage",
-    rowPageBreak: "avoid",
+    bodyStyles: { fontSize: 6, cellPadding: 3, textColor: TEXT as unknown as [number, number, number] },
+    alternateRowStyles: { fillColor: BG_SUBTLE as unknown as [number, number, number] },
+    showHead: "everyPage" as const,
+    rowPageBreak: "avoid" as const,
   });
 
-  y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + S24;
+  // 1. Qator xizmatlari
+  if (rowItems.length > 0) {
+    doc.setFontSize(6);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
+    doc.text("QATOR XIZMATLARI", MARGIN, y + 4);
+    y += 6;
+    const head = [["T/r", "Xizmat nomi", "Soni", "Narx", "Summa"]];
+    const body = rowItems.map((item, i) => {
+      const sum = Number(item.quantity) * Number(item.unitPrice);
+      return [
+        String(i + 1),
+        item.title,
+        String(item.quantity),
+        formatNum(Number(item.unitPrice)),
+        formatNum(sum),
+      ];
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    autoTable(doc, tableOpts(head, body) as any);
+    y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + S16;
+  }
+
+  // 2. Server xizmatlari
+  if (serverItems.length > 0) {
+    doc.setFontSize(6);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
+    doc.text("SERVER XIZMATLARI", MARGIN, y + 4);
+    y += 6;
+    const head = [["T/r", "Loyiha / Xizmat", "Oylar", "1 oy narxi", "Summa"]];
+    const body = serverItems.map((item, i) => {
+      const sum = Number(item.quantity) * Number(item.unitPrice);
+      const start = item.startDate ? new Date(item.startDate) : null;
+      const qolganStr = start ? ` (qolgan: ${remainingMonths(start, item.quantity)} oy)` : "";
+      return [
+        String(i + 1),
+        item.projectName ? `${item.projectName} / ${item.title}` : item.title,
+        String(item.quantity) + " oy" + qolganStr,
+        formatNum(Number(item.unitPrice)),
+        formatNum(sum),
+      ];
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    autoTable(doc, tableOpts(head, body) as any);
+    y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + S16;
+  }
+
+  // 3. API xizmatlari
+  if (apiItems.length > 0) {
+    doc.setFontSize(6);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
+    doc.text("API XIZMATLARI", MARGIN, y + 4);
+    y += 6;
+    const head = [["T/r", "Loyiha / Xizmat", "Oylar", "1 oy narxi", "Summa"]];
+    const body = apiItems.map((item, i) => {
+      const sum = Number(item.quantity) * Number(item.unitPrice);
+      const start = item.startDate ? new Date(item.startDate) : null;
+      const qolganStr = start ? ` (qolgan: ${remainingMonths(start, item.quantity)} oy)` : "";
+      return [
+        String(i + 1),
+        item.projectName ? `${item.projectName} / ${item.title}` : item.title,
+        String(item.quantity) + " oy" + qolganStr,
+        formatNum(Number(item.unitPrice)),
+        formatNum(sum),
+      ];
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    autoTable(doc, tableOpts(head, body) as any);
+    y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + S24;
+  } else if (rowItems.length > 0 || serverItems.length > 0) {
+    y += S8;
+  }
 
   const pageH = doc.internal.pageSize.getHeight();
   if (y + 95 > pageH - MARGIN) {
@@ -257,7 +383,7 @@ export async function generateInvoicePdf(data: InvoicePdfData, filename: string)
     y = MARGIN;
   }
 
-  // Summary — right-aligned
+  // Summary
   const sumW = 60;
   const sumX = PAGE_W - MARGIN - sumW;
   doc.setFontSize(7);
@@ -302,7 +428,7 @@ export async function generateInvoicePdf(data: InvoicePdfData, filename: string)
   doc.text(paymentLines, MARGIN + pad, y + 10);
   y += paymentH + S16;
 
-  // Signature area
+  // Signature
   const sigX = MARGIN + 55;
   let sigY = y;
   try {
@@ -328,7 +454,7 @@ export async function generateInvoicePdf(data: InvoicePdfData, filename: string)
   doc.text("VERIFIED", MARGIN + stampR + 5, y + stampR + 6, { align: "center" });
   y += 24;
 
-  // Footer — centered, subtle
+  // Footer
   y += 10;
   doc.setFontSize(6);
   doc.setFont("helvetica", "normal");

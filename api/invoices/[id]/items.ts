@@ -26,11 +26,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           title: z.string(),
           quantity: z.coerce.number().default(1),
           unitPrice: z.union([z.string(), z.number()]).transform((v) => String(v)),
-          serviceType: z.enum(["server", "api"]).optional(),
+          serviceType: z.enum(["row", "server", "api"]).optional(),
           startDate: z
             .union([z.string(), z.date()])
             .optional()
             .transform((v) => (v ? new Date(v) : undefined)),
+          projectId: z.coerce.number().optional(),
         })
         .parse(req.body);
       const item = await storage.createInvoiceItem({
@@ -38,8 +39,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         title: body.title,
         quantity: body.quantity,
         unitPrice: body.unitPrice,
-        serviceType: body.serviceType ?? null,
+        serviceType: body.serviceType ?? "row",
         startDate: body.startDate ?? null,
+        projectId: body.projectId ?? null,
       });
       const items = await storage.getInvoiceItems(id);
       const total = items.reduce((s, i) => s + Number(i.quantity) * Number(i.unitPrice), 0);

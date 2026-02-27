@@ -10,7 +10,8 @@
     "start": "cross-env NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
     "db:push": "drizzle-kit push",
-    "seed": "tsx server/seed.ts"
+    "seed": "tsx server/seed.ts",
+    "db:reset": "tsx server/reset-db.ts"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.19.0",
