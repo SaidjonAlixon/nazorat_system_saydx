@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { createRoot } from "react-dom/client";
 import { AppLayout } from "@/components/layout/AppLayout";
 import {
   useInvoices,
@@ -9,7 +10,8 @@ import {
   useAddInvoiceItem,
   useDeleteInvoiceItem,
 } from "@/hooks/use-finance";
-import { api } from "@shared/routes";
+import { InvoicePdfContent } from "@/components/InvoicePdfContent";
+import { generateInvoicePdf } from "@/lib/generate-invoice-pdf";
 import { useProjects } from "@/hooks/use-projects";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { format } from "date-fns";
@@ -409,39 +411,66 @@ export default function Invoices() {
     setIsInvDialogOpen(false);
   };
 
-  const handleDownloadPdf = async (inv: { id: number; pdfUrl?: string | null }) => {
-    setPdfGeneratingId(inv.id);
-    try {
-      let url: string;
-      if (inv.pdfUrl) {
-        url = inv.pdfUrl;
-      } else {
-        const element = document.querySelector(".invoice-preview");
-        const rect = element ? element.getBoundingClientRect() : null;
-        const width = rect && rect.width > 0 ? Math.round(rect.width) : undefined;
-        const height = rect && rect.height > 0 ? Math.round(rect.height) : undefined;
-        const res = await fetch(`/api/invoices/${inv.id}/generate-pdf`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(width != null && height != null ? { width, height } : {}),
-        });
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          throw new Error(data.message || "PDF yaratishda xato");
+  const handleDownloadPdf = useCallback(
+    async (inv: {
+      id: number;
+      invoiceNumber: string;
+      amount: string;
+      currency: string;
+      status?: string | null;
+      dueDate: string | Date;
+      createdAt: string | Date;
+      clientName?: string | null;
+      company?: string | null;
+      billToContact?: string | null;
+      paymentTerms?: string | null;
+      projectId?: number | null;
+    }) => {
+      setPdfGeneratingId(inv.id);
+      try {
+        const [itemsRes, settingsRes] = await Promise.all([
+          fetch(`/api/invoices/${inv.id}/items`, { credentials: "include" }),
+          fetch("/api/settings/invoice", { credentials: "include" }),
+        ]);
+        const items: { title: string; quantity: number; unitPrice: string }[] = itemsRes.ok ? await itemsRes.json() : [];
+        const settings = settingsRes.ok ? await settingsRes.json() : invoiceSettings;
+
+        const projectName = projects?.find((p) => p.id === inv.projectId)?.name;
+        const filename = inv.invoiceNumber.replace(/[^a-zA-Z0-9\-_.]/g, "_") || `INV-${String(inv.id).padStart(6, "0")}`;
+        const pdfFilename = filename.endsWith(".pdf") ? filename : `${filename}.pdf`;
+
+        const container = document.createElement("div");
+        container.style.cssText = "position:fixed;left:-9999px;top:0;width:794px;z-index:-1;";
+        document.body.appendChild(container);
+        const root = createRoot(container);
+        root.render(
+          <InvoicePdfContent
+            invoice={inv}
+            items={items}
+            projectName={projectName}
+            settings={settings}
+            paymentDetailLines={settings?.paymentDetailLines}
+          />
+        );
+
+        await new Promise((r) => requestAnimationFrame(() => setTimeout(r, 350)));
+        const el = container.querySelector(".invoice-pdf-content") as HTMLElement;
+        if (el) {
+          await generateInvoicePdf(el, pdfFilename);
+        } else {
+          throw new Error("PDF element not found");
         }
-        const data = await res.json();
-        url = data.url;
-        queryClient.invalidateQueries({ queryKey: [api.invoices.list.path] });
+        root.unmount();
+        document.body.removeChild(container);
+      } catch (e) {
+        console.error(e);
+        alert(e instanceof Error ? e.message : "PDF yuklanmadi");
+      } finally {
+        setPdfGeneratingId(null);
       }
-      window.open(url, "_blank");
-    } catch (e) {
-      console.error(e);
-      alert(e instanceof Error ? e.message : "PDF yuklanmadi");
-    } finally {
-      setPdfGeneratingId(null);
-    }
-  };
+    },
+    [projects, invoiceSettings]
+  );
 
   return (
     <AppLayout>
@@ -859,11 +888,7 @@ export default function Invoices() {
                   onClick={() => handleDownloadPdf(inv)}
                 >
                   <Download className="w-4 h-4 mr-1" />{" "}
-                  {pdfGeneratingId === inv.id
-                    ? "Yuklanmoqda..."
-                    : inv.pdfUrl
-                      ? "PDF ochish"
-                      : "PDF yuklash"}
+                  {pdfGeneratingId === inv.id ? "Yuklanmoqda..." : "PDF yuklash"}
                 </Button>
               </div>
             </div>
