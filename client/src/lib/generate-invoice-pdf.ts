@@ -131,26 +131,27 @@ export async function generateInvoicePdf(data: InvoicePdfData, filename: string)
   doc.line(MARGIN, y + 16, PAGE_W - MARGIN, y + 16);
   y += 20;
 
-  // Info blocks — chiroyli dizayn (2-rasm)
-  const blockW = (CONTENT_W - 4) / 2;
-  const blockPadding = 4;
+  // Info blocks — 4 ta card uzunroq, sarlavhalar sig'adi
+  const blockGap = 2;
+  const blockW = (CONTENT_W - blockGap) / 2;
+  const blockPadding = 3;
   const blockY1 = y;
-  const blockH1 = 22;
+  const blockH1 = 24;
   doc.setFillColor(248, 250, 252);
   doc.setDrawColor(226, 232, 240);
   doc.roundedRect(MARGIN, blockY1, blockW, blockH1, 2, 2, "FD");
-  doc.roundedRect(MARGIN + blockW + 4, blockY1, blockW, blockH1, 2, 2, "FD");
-  doc.setFontSize(6);
+  doc.roundedRect(MARGIN + blockW + blockGap, blockY1, blockW, blockH1, 2, 2, "FD");
+  doc.setFontSize(5.5);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(100, 116, 139);
   doc.text("HISOB-FAKTURA MA'LUMOTLARI", MARGIN + blockPadding, y + 5);
-  doc.text("HOLAT VA VALYUTA", MARGIN + blockW + 4 + blockPadding, y + 5);
+  doc.text("HOLAT VA VALYUTA", MARGIN + blockW + blockGap + blockPadding, y + 5);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
   doc.setTextColor(51, 65, 85);
   doc.setDrawColor(226, 232, 240);
   doc.line(MARGIN + blockPadding, y + 7, MARGIN + blockW - blockPadding, y + 7);
-  doc.line(MARGIN + blockW + 4 + blockPadding, y + 7, PAGE_W - MARGIN - blockPadding, y + 7);
+  doc.line(MARGIN + blockW + blockGap + blockPadding, y + 7, MARGIN + blockW + blockGap + blockW - blockPadding, y + 7);
   const leftBlock = [
     `Raqam: ${invoice.invoiceNumber}`,
     `ID: ${validationId}`,
@@ -165,35 +166,35 @@ export async function generateInvoicePdf(data: InvoicePdfData, filename: string)
     `To'lov shartlari: ${invoice.paymentTerms || "7 kun ichida"}`,
     `Valyuta: ${invoice.currency}`,
   ].join("\n");
-  doc.text(leftBlock, MARGIN + blockPadding, y + 12);
-  doc.text(rightBlock, MARGIN + blockW + 4 + blockPadding, y + 12);
+  doc.text(leftBlock, MARGIN + blockPadding, y + 13);
+  doc.text(rightBlock, MARGIN + blockW + blockGap + blockPadding, y + 13);
   y += blockH1 + 4;
 
-  // From / Bill To — chiroyli dizayn
-  const blockH2 = 24;
+  // From / Bill To — 4 ta card
+  const blockH2 = 26;
   doc.setFillColor(248, 250, 252);
   doc.setDrawColor(226, 232, 240);
   doc.roundedRect(MARGIN, y, blockW, blockH2, 2, 2, "FD");
-  doc.roundedRect(MARGIN + blockW + 4, y, blockW, blockH2, 2, 2, "FD");
-  doc.setFontSize(6);
+  doc.roundedRect(MARGIN + blockW + blockGap, y, blockW, blockH2, 2, 2, "FD");
+  doc.setFontSize(5.5);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(100, 116, 139);
   doc.text("FROM (Tomonidan)", MARGIN + blockPadding, y + 5);
-  doc.text("BILL TO (Kimga)", MARGIN + blockW + 4 + blockPadding, y + 5);
+  doc.text("BILL TO (Kimga)", MARGIN + blockW + blockGap + blockPadding, y + 5);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
   doc.setTextColor(51, 65, 85);
   doc.line(MARGIN + blockPadding, y + 7, MARGIN + blockW - blockPadding, y + 7);
-  doc.line(MARGIN + blockW + 4 + blockPadding, y + 7, PAGE_W - MARGIN - blockPadding, y + 7);
+  doc.line(MARGIN + blockW + blockGap + blockPadding, y + 7, MARGIN + blockW + blockGap + blockW - blockPadding, y + 7);
   doc.text(
     [settings.companyName, settings.address, settings.phone, `${settings.email} • ${settings.website}`].join("\n"),
     MARGIN + blockPadding,
-    y + 12
+    y + 13
   );
   doc.text(
     [invoice.clientName || "—", invoice.company || "—", invoice.billToContact || "—"].join("\n"),
-    MARGIN + blockW + 4 + blockPadding,
-    y + 12
+    MARGIN + blockW + blockGap + blockPadding,
+    y + 13
   );
   y += blockH2 + 4;
 
@@ -217,21 +218,26 @@ export async function generateInvoicePdf(data: InvoicePdfData, filename: string)
     startY: y,
     margin: { left: MARGIN, right: MARGIN },
     tableWidth: CONTENT_W,
+    tableLineColor: [200, 220, 240],
+    tableLineWidth: 0.2,
     columnStyles: {
-      0: { cellWidth: cw[0], halign: "left" },
-      1: { cellWidth: cw[1], halign: "left" },
-      2: { cellWidth: cw[2], halign: "right" },
-      3: { cellWidth: cw[3], halign: "right" },
-      4: { cellWidth: cw[4], halign: "right", fontStyle: "bold" },
+      0: { cellWidth: cw[0], halign: "left", cellPadding: 3 },
+      1: { cellWidth: cw[1], halign: "left", cellPadding: 3 },
+      2: { cellWidth: cw[2], halign: "right", cellPadding: 3 },
+      3: { cellWidth: cw[3], halign: "right", cellPadding: 3 },
+      4: { cellWidth: cw[4], halign: "right", fontStyle: "bold", cellPadding: 3 },
     },
     headStyles: {
       fillColor: [14, 165, 233],
       textColor: [255, 255, 255],
       fontStyle: "bold",
       fontSize: 7,
+      cellPadding: 4,
+      valign: "middle",
     },
     bodyStyles: {
       fontSize: 7,
+      cellPadding: 3,
     },
     alternateRowStyles: {
       fillColor: [248, 250, 252],
@@ -309,16 +315,20 @@ export async function generateInvoicePdf(data: InvoicePdfData, filename: string)
   doc.text(settings.authorizedPosition, sigX, sigCurrentY + 5);
   doc.text(dateStr(issueDate), sigX, sigCurrentY + 10);
   doc.setDrawColor(14, 165, 233);
-  doc.circle(MARGIN + 20, sigStartY + 12, 8);
-  doc.circle(MARGIN + 20, sigStartY + 12, 6);
-  doc.setFontSize(5);
+  const stampR = 12;
+  const stampR2 = 10;
+  const stampCy = sigStartY + stampR + 2;
+  doc.circle(MARGIN + stampR + 8, stampCy, stampR);
+  doc.circle(MARGIN + stampR + 8, stampCy, stampR2);
+  doc.setFontSize(6);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(14, 165, 233);
-  doc.text("SAYD.X", MARGIN + 20, sigStartY + 10, { align: "center" });
-  doc.text("VERIFIED", MARGIN + 20, sigStartY + 14, { align: "center" });
-  y += Math.max(24, sigCurrentY + 14 - sigStartY);
+  doc.text("SAYD.X", MARGIN + stampR + 8, stampCy - 3, { align: "center" });
+  doc.text("VERIFIED", MARGIN + stampR + 8, stampCy + 2, { align: "center" });
+  y += Math.max(stampR * 2 + 8, sigCurrentY + 14 - sigStartY);
 
-  // Footer — only on last page
+  // Footer — pechatdan 1cm pastda
+  y += 10;
   doc.setFontSize(8);
   doc.setTextColor(71, 85, 105);
   doc.text(

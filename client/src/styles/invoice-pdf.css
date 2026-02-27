@@ -67,11 +67,11 @@
   letter-spacing: 0.5pt;
 }
 
-/* Two-column grid */
+/* Two-column grid — 4 ta card uzunroq, sarlavhalar sig'adi */
 .invoice-pdf-a4__grid2 {
   display: grid;
-  grid-template-columns: 90mm 90mm;
-  gap: 8pt;
+  grid-template-columns: 1fr 1fr;
+  gap: 4pt;
   margin-bottom: 8pt;
   width: 100%;
   max-width: 100%;
@@ -80,7 +80,7 @@
 .invoice-pdf-a4__block {
   min-width: 0;
   max-width: 100%;
-  padding: 6pt 10pt;
+  padding: 6pt 12pt;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 4pt;
@@ -90,7 +90,7 @@
 }
 
 .invoice-pdf-a4__block-title {
-  font-size: 7pt;
+  font-size: 6.5pt;
   font-weight: 700;
   color: #64748b;
   text-transform: uppercase;
@@ -153,9 +153,10 @@
   font-weight: 700;
   font-size: 7pt;
   text-transform: uppercase;
+  border-bottom: 2px solid #0284c7;
 }
 
-/* Ko'k sarlavhalar pasdagi ma'lumotlar bilan to'g'risida */
+/* Ko'k sarlavhalar o'z qatoriga, pasdagi ma'lumotlar bilan to'g'risida */
 .invoice-pdf-a4__table thead th.col-num,
 .invoice-pdf-a4__table thead th.col-name {
   text-align: left;
@@ -270,16 +271,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 64pt;
-  height: 64pt;
+  width: 80pt;
+  height: 80pt;
   border-radius: 50%;
   border: 2px solid #0ea5e9;
   flex-shrink: 0;
 }
 
 .invoice-pdf-a4__stamp {
-  width: 52pt;
-  height: 52pt;
+  width: 66pt;
+  height: 66pt;
   border-radius: 50%;
   border: 2px solid #0ea5e9;
   display: flex;
@@ -310,12 +311,12 @@
   margin-bottom: 6pt;
 }
 
-/* Meta footer */
+/* Meta footer — pechatdan 1cm pastda */
 .invoice-pdf-a4__meta {
   text-align: center;
   font-size: 9pt;
   color: #475569;
-  margin-top: 10pt;
+  margin-top: 28pt;
   padding-top: 8pt;
   padding-bottom: 4pt;
   border-top: 1px solid #e2e8f0;
