@@ -8,12 +8,14 @@
   height: 1123px;
 }
 
-/* Invoice PDF content — A4 layout for html2pdf capture */
+/* Invoice PDF content — A4 (210×297mm) for html2pdf capture */
 .invoice-pdf-content {
   overflow: hidden;
   box-sizing: border-box;
   width: 794px;
-  min-height: 1123px;
+  min-height: 1055px;
+  max-height: 1123px;
+  padding: 32px 40px 36px;
 }
 @media (max-width: 840px) {
   .invoice-preview {

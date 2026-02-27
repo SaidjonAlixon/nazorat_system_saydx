@@ -34,7 +34,7 @@ type InvoicePdfContentProps = {
 };
 
 const formatNum = (n: number) =>
-  new Intl.NumberFormat("uz-UZ", { maximumFractionDigits: 0 }).format(n);
+  new Intl.NumberFormat("uz-UZ", { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n);
 
 const dateStr = (d: Date | string) =>
   new Date(d).toLocaleDateString("uz-UZ", {
@@ -42,6 +42,147 @@ const dateStr = (d: Date | string) =>
     month: "2-digit",
     year: "numeric",
   }).replace(/\//g, ".");
+
+const styles = {
+  page: {
+    width: "794px",
+    minHeight: "1055px",
+    boxSizing: "border-box" as const,
+    padding: "32px 40px 36px",
+    backgroundColor: "#ffffff",
+    fontFamily: "'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', Arial, sans-serif",
+    fontSize: "11px",
+    lineHeight: 1.5,
+    color: "#1a1a1a",
+    overflow: "hidden" as const,
+  },
+  header: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: "28px",
+    paddingBottom: "20px",
+    borderBottom: "2px solid #0ea5e9",
+  },
+  logo: { height: "48px", width: "auto" },
+  brand: {
+    fontSize: "22px",
+    fontWeight: 700,
+    color: "#0ea5e9",
+    letterSpacing: "0.5px",
+  },
+  title: {
+    fontSize: "18px",
+    fontWeight: 600,
+    color: "#0f172a",
+    letterSpacing: "1px",
+    textTransform: "uppercase" as const,
+  },
+  grid2: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", marginBottom: "20px" },
+  block: {
+    padding: "14px 16px",
+    backgroundColor: "#f8fafc",
+    borderRadius: "8px",
+    border: "1px solid #e2e8f0",
+  },
+  blockTitle: {
+    fontSize: "10px",
+    fontWeight: 600,
+    color: "#64748b",
+    textTransform: "uppercase" as const,
+    letterSpacing: "0.8px",
+    marginBottom: "8px",
+    paddingBottom: "6px",
+    borderBottom: "1px solid #e2e8f0",
+  },
+  row: { marginBottom: "4px", color: "#334155" },
+  table: {
+    width: "100%",
+    borderCollapse: "collapse" as const,
+    marginBottom: "16px",
+    borderRadius: "8px",
+    overflow: "hidden" as const,
+    border: "1px solid #e2e8f0",
+  },
+  th: {
+    padding: "12px 14px",
+    textAlign: "left" as const,
+    backgroundColor: "#0ea5e9",
+    color: "#ffffff",
+    fontWeight: 600,
+    fontSize: "10px",
+    textTransform: "uppercase" as const,
+  },
+  td: {
+    padding: "10px 14px",
+    borderBottom: "1px solid #f1f5f9",
+  },
+  tdRight: { textAlign: "right" as const },
+  totals: {
+    display: "flex",
+    flexDirection: "column" as const,
+    alignItems: "flex-end",
+    gap: "6px",
+    padding: "14px 20px",
+    backgroundColor: "#f0f9ff",
+    borderRadius: "8px",
+    border: "1px solid #bae6fd",
+    marginBottom: "20px",
+    maxWidth: "280px",
+    marginLeft: "auto",
+  },
+  totalRow: { display: "flex", justifyContent: "space-between", width: "100%", gap: "40px" },
+  totalLabel: { color: "#475569", fontWeight: 500 },
+  totalValue: { fontWeight: 600, color: "#0f172a" },
+  grandTotal: {
+    fontSize: "15px",
+    fontWeight: 700,
+    color: "#0ea5e9",
+    marginTop: "4px",
+    paddingTop: "8px",
+    borderTop: "2px solid #bae6fd",
+    width: "100%",
+    display: "flex",
+    justifyContent: "space-between",
+  },
+  paymentBlock: {
+    padding: "14px 16px",
+    backgroundColor: "#f8fafc",
+    borderRadius: "8px",
+    border: "1px solid #e2e8f0",
+    marginBottom: "24px",
+  },
+  footer: {
+    display: "flex",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    marginTop: "24px",
+    paddingTop: "20px",
+    borderTop: "1px solid #e2e8f0",
+  },
+  stamp: {
+    width: "64px",
+    height: "64px",
+    borderRadius: "50%",
+    border: "2px solid #0ea5e9",
+    display: "flex",
+    flexDirection: "column" as const,
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "8px",
+    fontWeight: 700,
+    color: "#0ea5e9",
+  },
+  signature: { textAlign: "right" as const, fontSize: "10px", color: "#475569" },
+  meta: {
+    textAlign: "center" as const,
+    fontSize: "9px",
+    color: "#94a3b8",
+    marginTop: "16px",
+    paddingTop: "12px",
+    borderTop: "1px solid #f1f5f9",
+  },
+};
 
 export function InvoicePdfContent({
   invoice,
@@ -58,6 +199,9 @@ export function InvoicePdfContent({
   items.forEach((item) => {
     subtotal += Number(item.quantity) * Number(item.unitPrice);
   });
+  const tax = 0;
+  const discount = 0;
+  const total = Number(invoice.amount) || subtotal;
 
   const lines = paymentDetailLines.length > 0
     ? paymentDetailLines
@@ -69,111 +213,127 @@ export function InvoicePdfContent({
   const statusLabel = invoice.status === "paid" ? "To'langan" : "Kutilmoqda";
 
   return (
-    <div
-      className="invoice-pdf-content bg-white text-black p-6"
-      style={{
-        fontFamily: "Helvetica, Arial, sans-serif",
-        width: "794px",
-        minHeight: "1123px",
-        boxSizing: "border-box",
-      }}
-    >
-      <div className="flex justify-center pt-2 pb-2">
-        <img src="/LOGO2.png" alt="Logo" className="h-16 w-auto object-contain" />
-      </div>
-      <div className="text-center border-b border-gray-200 pb-3 mb-4">
-        <h2 className="text-xl font-bold tracking-wide">HISOB-FAKTURA</h2>
+    <div className="invoice-pdf-content" style={styles.page}>
+      {/* Header */}
+      <div style={styles.header}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <img src="/LOGO2.png" alt="SAYD.X" style={styles.logo} />
+          <span style={styles.brand}>SAYD.X</span>
+        </div>
+        <h1 style={styles.title}>Hisob-faktura</h1>
       </div>
 
-      <div className="grid grid-cols-2 gap-6 text-xs mb-4">
-        <div className="space-y-1">
-          <div className="font-semibold text-gray-700">Hisob-faktura ma&apos;lumotlari</div>
-          <p>Raqam: {invoice.invoiceNumber}</p>
-          <p>ID: {validationId}</p>
-          <p>Sana: {dateStr(issueDate)}</p>
-          <p>To&apos;lov muddati: {dateStr(dueDate)}</p>
-          {projectName && <p>Loyiha: {projectName}</p>}
+      {/* Invoice & Status */}
+      <div style={styles.grid2}>
+        <div style={styles.block}>
+          <div style={styles.blockTitle}>Hisob-faktura ma'lumotlari</div>
+          <div style={styles.row}>Raqam: {invoice.invoiceNumber}</div>
+          <div style={styles.row}>ID: {validationId}</div>
+          <div style={styles.row}>Sana: {dateStr(issueDate)}</div>
+          <div style={styles.row}>To'lov muddati: {dateStr(dueDate)}</div>
+          {projectName && <div style={styles.row}>Loyiha: {projectName}</div>}
         </div>
-        <div className="space-y-1">
-          <div className="font-semibold text-gray-700">Holat va valyuta</div>
-          <p>Holat: {statusLabel}</p>
-          <p>To&apos;lov shartlari: {invoice.paymentTerms || "7 kun ichida"}</p>
-          <p>Valyuta: {invoice.currency}</p>
+        <div style={styles.block}>
+          <div style={styles.blockTitle}>Holat va valyuta</div>
+          <div style={styles.row}>Holat: {statusLabel}</div>
+          <div style={styles.row}>To'lov shartlari: {invoice.paymentTerms || "7 kun ichida"}</div>
+          <div style={styles.row}>Valyuta: {invoice.currency}</div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-6 text-xs pt-2 border-t border-gray-200 mb-4">
-        <div className="space-y-1">
-          <div className="font-semibold text-gray-700">FROM (Tomonidan)</div>
-          <p>{settings.companyName}</p>
-          <p>{settings.address}</p>
-          <p>{settings.phone}</p>
-          <p>{settings.email} • {settings.website}</p>
+      {/* From / Bill To */}
+      <div style={styles.grid2}>
+        <div style={styles.block}>
+          <div style={styles.blockTitle}>FROM (Tomonidan)</div>
+          <div style={styles.row}>{settings.companyName}</div>
+          <div style={styles.row}>{settings.address}</div>
+          <div style={styles.row}>{settings.phone}</div>
+          <div style={styles.row}>{settings.email} • {settings.website}</div>
         </div>
-        <div className="space-y-1">
-          <div className="font-semibold text-gray-700">BILL TO (Kimga)</div>
-          <p>{invoice.clientName || "Mijoz ismi"}</p>
-          <p>{invoice.company || "Kompaniya"}</p>
-          <p>{invoice.billToContact || "Manzil, tel, email"}</p>
+        <div style={styles.block}>
+          <div style={styles.blockTitle}>BILL TO (Kimga)</div>
+          <div style={styles.row}>{invoice.clientName || "—"}</div>
+          <div style={styles.row}>{invoice.company || "—"}</div>
+          <div style={styles.row}>{invoice.billToContact || "—"}</div>
         </div>
       </div>
 
-      <div className="text-xs border border-gray-200 rounded overflow-hidden mb-4">
-        <div className="grid grid-cols-12 bg-[#F2F2F2] font-semibold py-2 px-2 border-b border-gray-300">
-          <div className="col-span-1">T/r</div>
-          <div className="col-span-5">Xizmat nomi</div>
-          <div className="col-span-2 text-right">Soni</div>
-          <div className="col-span-2 text-right">Narx</div>
-          <div className="col-span-2 text-right">Summa</div>
+      {/* Items Table */}
+      <table style={styles.table}>
+        <thead>
+          <tr>
+            <th style={{ ...styles.th, width: "40px" }}>T/r</th>
+            <th style={styles.th}>Xizmat nomi</th>
+            <th style={{ ...styles.th, ...styles.tdRight, width: "80px" }}>Soni</th>
+            <th style={{ ...styles.th, ...styles.tdRight, width: "100px" }}>Narx</th>
+            <th style={{ ...styles.th, ...styles.tdRight, width: "110px" }}>Summa</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item, i) => {
+            const sum = Number(item.quantity) * Number(item.unitPrice);
+            return (
+              <tr key={i}>
+                <td style={{ ...styles.td, color: "#64748b" }}>{i + 1}</td>
+                <td style={styles.td}>{item.title}</td>
+                <td style={{ ...styles.td, ...styles.tdRight }}>{item.quantity}</td>
+                <td style={{ ...styles.td, ...styles.tdRight }}>{formatNum(Number(item.unitPrice))}</td>
+                <td style={{ ...styles.td, ...styles.tdRight, fontWeight: 600 }}>{formatNum(sum)}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+
+      {/* Totals */}
+      <div style={styles.totals}>
+        <div style={styles.totalRow}>
+          <span style={styles.totalLabel}>Subtotal:</span>
+          <span style={styles.totalValue}>{formatNum(subtotal)} {invoice.currency}</span>
         </div>
-        {items.map((item, i) => {
-          const sum = Number(item.quantity) * Number(item.unitPrice);
-          return (
-            <div
-              key={i}
-              className="grid grid-cols-12 py-2 px-2 border-b border-gray-100"
-            >
-              <div className="col-span-1">{i + 1}</div>
-              <div className="col-span-5 truncate">{item.title}</div>
-              <div className="col-span-2 text-right">{item.quantity}</div>
-              <div className="col-span-2 text-right">{formatNum(Number(item.unitPrice))}</div>
-              <div className="col-span-2 text-right">{formatNum(sum)}</div>
-            </div>
-          );
-        })}
+        <div style={styles.totalRow}>
+          <span style={styles.totalLabel}>Tax:</span>
+          <span style={styles.totalValue}>{formatNum(tax)} {invoice.currency}</span>
+        </div>
+        <div style={styles.totalRow}>
+          <span style={styles.totalLabel}>Discount:</span>
+          <span style={styles.totalValue}>{formatNum(discount)} {invoice.currency}</span>
+        </div>
+        <div style={styles.grandTotal}>
+          <span>JAMI:</span>
+          <span>{formatNum(total)} {invoice.currency}</span>
+        </div>
       </div>
 
-      <div className="flex flex-col items-end text-xs space-y-1 pt-2 border-t-2 border-gray-300 mb-4">
-        <div className="flex gap-8"><span>Subtotal:</span><span>{formatNum(subtotal)} {invoice.currency}</span></div>
-        <div className="flex gap-8"><span>Tax:</span><span>0.00 {invoice.currency}</span></div>
-        <div className="flex gap-8"><span>Discount:</span><span>0.00 {invoice.currency}</span></div>
-        <div className="font-bold text-base mt-1">JAMI: {formatNum(Number(invoice.amount))} {invoice.currency}</div>
-      </div>
-
-      <div className="text-xs pt-2 border-t border-gray-200 mb-4">
-        <div className="font-semibold mb-1">Payment Details</div>
+      {/* Payment Details */}
+      <div style={styles.paymentBlock}>
+        <div style={{ ...styles.blockTitle, marginBottom: "10px" }}>To'lov ma'lumotlari</div>
         {lines.map((line, i) => (
-          <p key={i}>
+          <div key={i} style={styles.row}>
             {line.title ? `${line.title}: ${line.value}` : line.value}
-          </p>
+          </div>
         ))}
-        <p className="text-gray-600">{settings.paymentNote}</p>
+        <div style={{ ...styles.row, marginTop: "8px", color: "#64748b" }}>{settings.paymentNote}</div>
       </div>
 
-      <div className="flex justify-end items-end gap-4 pt-4">
-        <div className="w-16 h-16 rounded-full border-2 border-blue-500 flex flex-col items-center justify-center text-blue-600 text-[8px] font-bold shrink-0">
-          <span>SAYD.X</span>
-          <span>VERIFIED</span>
-        </div>
-        <div className="text-right text-xs">
-          <img src="/imzo.PNG" alt="Imzo" className="h-12 w-auto object-contain mb-1 mt-2 ml-6" />
-          <div>{settings.authorizedName}</div>
-          <div>{settings.authorizedPosition}</div>
-          <div>{dateStr(issueDate)}</div>
+      {/* Footer */}
+      <div style={styles.footer}>
+        <div />
+        <div style={{ display: "flex", alignItems: "flex-end", gap: "16px" }}>
+          <div style={styles.stamp}>
+            <span>SAYD.X</span>
+            <span>VERIFIED</span>
+          </div>
+          <div style={styles.signature}>
+            <img src="/imzo.PNG" alt="Imzo" style={{ height: "40px", marginBottom: "4px" }} />
+            <div>{settings.authorizedName}</div>
+            <div>{settings.authorizedPosition}</div>
+            <div>{dateStr(issueDate)}</div>
+          </div>
         </div>
       </div>
 
-      <div className="text-center text-[9px] text-gray-500 pt-4 border-t border-gray-100 mt-4">
+      <div style={styles.meta}>
         {settings.website} • {settings.email} • Generated by SAYD.X • Invoice ID: {validationId}
       </div>
     </div>
