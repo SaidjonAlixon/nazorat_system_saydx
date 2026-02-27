@@ -102,12 +102,15 @@
   font-size: 9pt;
 }
 
-/* Table */
+/* Table — bounded container, no overflow */
 .invoice-pdf-a4__table-wrap {
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
+  overflow: hidden;
   margin-bottom: 12pt;
+  border: 1px solid #e2e8f0;
+  border-radius: 6pt;
+  border-top: 2px solid #0ea5e9;
 }
 
 .invoice-pdf-a4__table {
@@ -129,7 +132,7 @@
 .invoice-pdf-a4__table thead th {
   background: #0ea5e9;
   color: #fff;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 8pt;
   text-transform: uppercase;
 }
@@ -146,12 +149,16 @@
 
 .invoice-pdf-a4__table .text-right { text-align: right; }
 
-/* Prevent table row break across pages */
+/* Prevent table row break across pages; allow table to flow */
 .invoice-pdf-a4__table tr {
   page-break-inside: avoid;
 }
 
-/* Summary box */
+.invoice-pdf-a4__table tbody tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+/* Summary box — keep with table when page breaks */
 .invoice-pdf-a4__totals {
   width: 100%;
   max-width: 180mm;
@@ -160,7 +167,9 @@
   padding: 10pt 14pt;
   background: #f0f9ff;
   border: 1px solid #bae6fd;
-  border-radius: 4pt;
+  border-radius: 6pt;
+  page-break-inside: avoid;
+  page-break-after: avoid;
 }
 
 .invoice-pdf-a4__total-row {
@@ -281,7 +290,7 @@
   word-break: break-word;
 }
 
-/* Print media */
+/* Print / PDF media — multi-page layout */
 @media print {
   .invoice-pdf-a4 {
     width: 210mm;
@@ -297,7 +306,23 @@
     max-width: 180mm;
   }
 
+  /* Table header repeats on each page */
+  .invoice-pdf-a4__table thead {
+    display: table-header-group;
+  }
+
   .invoice-pdf-a4__table tr {
+    page-break-inside: avoid;
+  }
+
+  /* Totals, payment, footer — avoid awkward splits */
+  .invoice-pdf-a4__totals,
+  .invoice-pdf-a4__payment {
+    page-break-inside: avoid;
+    page-break-after: avoid;
+  }
+
+  .invoice-pdf-a4__footer {
     page-break-inside: avoid;
   }
 
