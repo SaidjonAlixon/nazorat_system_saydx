@@ -1,0 +1,27 @@
+import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { storage } from "../../../_lib";
+
+/**
+ * DELETE /api/invoices/:invoiceId/items/:itemId
+ */
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const itemId = Number((req.query as { itemId?: string }).itemId);
+  const invoiceId = Number((req.query as { invoiceId?: string }).invoiceId);
+  if (!itemId || Number.isNaN(itemId) || !invoiceId || Number.isNaN(invoiceId)) {
+    return res.status(400).json({ message: "Invalid id" });
+  }
+  if (req.method !== "DELETE") {
+    res.setHeader("Allow", "DELETE");
+    return res.status(405).json({ message: "Method Not Allowed" });
+  }
+  try {
+    await storage.deleteInvoiceItem(itemId);
+    const remaining = await storage.getInvoiceItems(invoiceId);
+    const total = remaining.reduce((s, i) => s + Number(i.quantity) * Number(i.unitPrice), 0);
+    await storage.updateInvoice(invoiceId, { amount: String(total) });
+    return res.status(204).send("");
+  } catch (err) {
+    console.error("[api/invoices/:invoiceId/items/:itemId DELETE]", err);
+    return res.status(500).json({ message: "Failed to delete item" });
+  }
+}
