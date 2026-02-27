@@ -21,7 +21,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 
 export default function Dashboard() {
-  const { data: stats, isLoading } = useDashboardStats();
+  const { data: stats, isLoading, isError, refetch } = useDashboardStats();
   const { displayCurrency, setDisplayCurrency, formatMoney, toUsd, uzsPerUsd } = useCurrency();
   const [hideCurrencyBanner, setHideCurrencyBanner] = useState(false);
 
@@ -33,7 +33,20 @@ export default function Dashboard() {
     );
   }
 
-  if (!stats) return null;
+  if (isError || !stats) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col items-center justify-center min-h-[300px] gap-4 text-center">
+          <p className="text-destructive font-medium">
+            Boshqaruv paneli statistikasi yuklanmadi. Server yoki bazaga ulanishda xato.
+          </p>
+          <Button onClick={() => refetch()} variant="outline" className="border-primary text-primary">
+            Qayta yuklash
+          </Button>
+        </div>
+      </AppLayout>
+    );
+  }
 
   const monthNames = ["Yan", "Fev", "Mar", "Apr", "May", "Iyn", "Iyl", "Avg", "Sen", "Okt", "Noy", "Dek"];
   const revenueData = (stats.monthlyStats || []).map((m) => {

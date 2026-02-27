@@ -9,5 +9,7 @@ export function useDashboardStats() {
       if (!res.ok) throw new Error("Boshqaruv paneli statistikasi yuklanmadi");
       return api.dashboard.stats.responses[200].parse(await res.json());
     },
+    retry: 2,
+    retryDelay: 2000,
   });
 }

@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 const STORAGE_KEY = "s-ubos-display-currency";
 const FALLBACK_UZS_PER_USD = 12_500;
-const RATE_API = "https://api.frankfurter.dev/latest?from=USD&to=UZS";
 
 export type DisplayCurrency = "UZS" | "USD";
 
@@ -12,17 +12,17 @@ export function useCurrency() {
     const saved = localStorage.getItem(STORAGE_KEY) as DisplayCurrency | null;
     return saved === "USD" || saved === "UZS" ? saved : "UZS";
   });
-  const [uzsPerUsd, setUzsPerUsd] = useState<number>(FALLBACK_UZS_PER_USD);
 
-  useEffect(() => {
-    fetch(RATE_API)
-      .then((res) => res.json())
-      .then((data: { rates?: { UZS?: number } }) => {
-        const rate = data?.rates?.UZS;
-        if (typeof rate === "number" && rate > 0) setUzsPerUsd(rate);
-      })
-      .catch(() => {});
-  }, []);
+  const { data: rateData } = useQuery({
+    queryKey: ["/api/currency-rate"],
+    queryFn: async () => {
+      const res = await fetch("/api/currency-rate", { credentials: "include" });
+      const data = (await res.json()) as { usdToUzs?: number };
+      return data;
+    },
+    staleTime: 60 * 60 * 1000,
+  });
+  const uzsPerUsd = typeof rateData?.usdToUzs === "number" && rateData.usdToUzs > 0 ? rateData.usdToUzs : FALLBACK_UZS_PER_USD;
 
   const setDisplayCurrency = useCallback((c: DisplayCurrency) => {
     setDisplayCurrencyState(c);
