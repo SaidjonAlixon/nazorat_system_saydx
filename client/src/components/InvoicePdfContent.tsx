@@ -149,7 +149,7 @@ export function InvoicePdfContent({
         </div>
 
         {/* Summary */}
-        <div className="invoice-pdf-a4__totals" style={{ width: "100%", maxWidth: "100%" }}>
+        <div className="invoice-pdf-a4__totals">
           <div className="invoice-pdf-a4__total-row">
             <span>Subtotal:</span>
             <span>{formatNum(subtotal)} {invoice.currency}</span>
@@ -170,13 +170,13 @@ export function InvoicePdfContent({
 
         {/* Payment Information */}
         <div className="invoice-pdf-a4__payment">
-          <div className="invoice-pdf-a4__block-title" style={{ marginBottom: "6pt" }}>To'lov ma'lumotlari</div>
+          <div className="invoice-pdf-a4__block-title invoice-pdf-a4__block-title--payment">To'lov ma'lumotlari</div>
           {lines.map((line, i) => (
             <div key={i} className="invoice-pdf-a4__row">
               {line.title ? `${line.title}: ${line.value}` : line.value}
             </div>
           ))}
-          <div className="invoice-pdf-a4__row" style={{ marginTop: "6pt", color: "#64748b" }}>{settings.paymentNote}</div>
+          <div className="invoice-pdf-a4__row invoice-pdf-a4__row--note">{settings.paymentNote}</div>
         </div>
 
         {/* Footer / Signature */}
