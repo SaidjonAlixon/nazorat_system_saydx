@@ -13,6 +13,7 @@ const TEXT_LIGHT: [number, number, number] = [136, 136, 136]; // #888
 const ACCENT: [number, number, number] = [37, 99, 235]; // #2563eb
 const BORDER: [number, number, number] = [229, 231, 235];
 const BG_SUBTLE: [number, number, number] = [249, 250, 251];
+const BG_CARD: [number, number, number] = [248, 250, 252]; // ochiq kulrang
 
 const S8 = 3;
 const S16 = 6;
@@ -72,6 +73,18 @@ async function loadImageAsBase64(url: string): Promise<string> {
   });
 }
 
+async function getImageSize(dataUrl: string): Promise<{ w: number; h: number }> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const pxPerMm = 96 / 25.4;
+      resolve({ w: img.naturalWidth / pxPerMm, h: img.naturalHeight / pxPerMm });
+    };
+    img.onerror = reject;
+    img.src = dataUrl;
+  });
+}
+
 /**
  * Modern SaaS-style invoice PDF — A4, 15mm margins, multi-page.
  */
@@ -104,10 +117,13 @@ export async function generateInvoicePdf(data: InvoicePdfData, filename: string)
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
   let y = MARGIN;
 
-  // Header: logo left, title right, thin divider
+  // Header: logo left (to'g'ri o'lchamda), title right, thin divider
   try {
     const logoB64 = await loadImageAsBase64("/LOGO2.png");
-    doc.addImage(logoB64, "PNG", MARGIN, y, 36, 9);
+    const dim = await getImageSize(logoB64);
+    const logoH = 12;
+    const logoW = Math.min((dim.w / dim.h) * logoH, 45);
+    doc.addImage(logoB64, "PNG", MARGIN, y, logoW, logoH);
   } catch {
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
@@ -117,11 +133,11 @@ export async function generateInvoicePdf(data: InvoicePdfData, filename: string)
   doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
-  doc.text("HISOB-FAKTURA", PAGE_W - MARGIN, y + 6, { align: "right" });
+  doc.text("HISOB-FAKTURA", PAGE_W - MARGIN, y + 8, { align: "right" });
   doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
   doc.setLineWidth(0.2);
-  doc.line(MARGIN, y + 14, PAGE_W - MARGIN, y + 14);
-  y += 18;
+  doc.line(MARGIN, y + 16, PAGE_W - MARGIN, y + 16);
+  y += 20;
 
   // Info grid (2 columns)
   const colW = (CONTENT_W - S16) / 2;
@@ -160,7 +176,9 @@ export async function generateInvoicePdf(data: InvoicePdfData, filename: string)
   doc.text(rightInfo, MARGIN + colW + S16 + pad, y + 14);
   y += 32;
 
-  // Client grid
+  // Client grid — ochiq kulrang (qora emas)
+  doc.setFillColor(BG_CARD[0], BG_CARD[1], BG_CARD[2]);
+  doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
   doc.roundedRect(MARGIN, y, colW, 30, 2, 2, "FD");
   doc.roundedRect(MARGIN + colW + S16, y, colW, 30, 2, 2, "FD");
   doc.setFontSize(5);
@@ -206,18 +224,18 @@ export async function generateInvoicePdf(data: InvoicePdfData, filename: string)
     tableLineColor: BORDER as unknown as [number, number, number],
     tableLineWidth: 0.15,
     columnStyles: {
-      0: { cellWidth: cw[0], halign: "left", cellPadding: 4 },
-      1: { cellWidth: cw[1], halign: "left", cellPadding: 4 },
-      2: { cellWidth: cw[2], halign: "right", cellPadding: 4 },
-      3: { cellWidth: cw[3], halign: "right", cellPadding: 4 },
-      4: { cellWidth: cw[4], halign: "right", fontStyle: "bold", cellPadding: 4 },
+      0: { cellWidth: cw[0], halign: "left", cellPadding: 3 },
+      1: { cellWidth: cw[1], halign: "left", cellPadding: 3 },
+      2: { cellWidth: cw[2], halign: "right", cellPadding: 3 },
+      3: { cellWidth: cw[3], halign: "right", cellPadding: 3 },
+      4: { cellWidth: cw[4], halign: "right", fontStyle: "bold", cellPadding: 3 },
     },
     headStyles: {
       fillColor: ACCENT as unknown as [number, number, number],
       textColor: [255, 255, 255],
       fontStyle: "bold",
-      fontSize: 7,
-      cellPadding: 4,
+      fontSize: 6,
+      cellPadding: 2,
     },
     bodyStyles: {
       fontSize: 7,
