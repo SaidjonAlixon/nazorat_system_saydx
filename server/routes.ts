@@ -7,6 +7,7 @@ import { z } from "zod";
 import { getInvoicePdfPath } from "./invoicePdf";
 import { generateInvoicePdfPuppeteer } from "./invoicePdfPuppeteer";
 import { getUsdToUzsRate } from "./currencyRate";
+import { isAuthenticated } from "./replit_integrations/auth";
 
 // Import integration routes
 import { registerAuthRoutes } from "./replit_integrations/auth";
@@ -31,7 +32,7 @@ export async function registerRoutes(
     t.currency === "USD" ? Number(t.amount) * usdToUzs : Number(t.amount);
 
   // --- Dashboard ---
-  app.get(api.dashboard.stats.path, async (req, res) => {
+  app.get(api.dashboard.stats.path, isAuthenticated, async (req, res) => {
     try {
       const [projects, txs, totalMinutes, currencyResult] = await Promise.all([
         storage.getProjects(),
@@ -90,7 +91,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/currency-rate", async (req, res) => {
+  app.get("/api/currency-rate", isAuthenticated, async (req, res) => {
     try {
       const { rate: usdToUzs, source } = await getUsdToUzsRate(() => storage.getManualUsdToUzs());
       res.json({ usdToUzs, currencyRateSource: source });
@@ -100,7 +101,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/settings/finance", async (req, res) => {
+  app.get("/api/settings/finance", isAuthenticated, async (req, res) => {
     try {
       const manualUsdToUzs = await storage.getManualUsdToUzs();
       res.json({ manualUsdToUzs: manualUsdToUzs ?? null });
@@ -110,7 +111,7 @@ export async function registerRoutes(
     }
   });
 
-  app.put("/api/settings/finance", async (req, res) => {
+  app.put("/api/settings/finance", isAuthenticated, async (req, res) => {
     try {
       const { manualUsdToUzs } = req.body as { manualUsdToUzs?: number };
       const rate = Number(manualUsdToUzs);
@@ -126,12 +127,12 @@ export async function registerRoutes(
   });
 
   // --- Clients ---
-  app.get(api.clients.list.path, async (req, res) => {
+  app.get(api.clients.list.path, isAuthenticated, async (req, res) => {
     const clients = await storage.getClients();
     res.json(clients);
   });
 
-  app.post(api.clients.create.path, async (req, res) => {
+  app.post(api.clients.create.path, isAuthenticated, async (req, res) => {
     try {
       const input = api.clients.create.input.parse(req.body);
       const client = await storage.createClient(input);
@@ -144,12 +145,12 @@ export async function registerRoutes(
     }
   });
 
-  app.get(api.companies.list.path, async (req, res) => {
+  app.get(api.companies.list.path, isAuthenticated, async (req, res) => {
     const list = await storage.getCompanies();
     res.json(list);
   });
 
-  app.post(api.companies.create.path, async (req, res) => {
+  app.post(api.companies.create.path, isAuthenticated, async (req, res) => {
     try {
       const input = api.companies.create.input.parse(req.body);
       const company = await storage.createCompany(input);
@@ -163,18 +164,18 @@ export async function registerRoutes(
   });
 
   // --- Projects ---
-  app.get(api.projects.list.path, async (req, res) => {
+  app.get(api.projects.list.path, isAuthenticated, async (req, res) => {
     const projects = await storage.getProjects();
     res.json(projects);
   });
 
-  app.get(api.projects.get.path, async (req, res) => {
+  app.get(api.projects.get.path, isAuthenticated, async (req, res) => {
     const project = await storage.getProject(Number(req.params.id));
     if (!project) return res.status(404).json({ message: "Project not found" });
     res.json(project);
   });
 
-  app.post(api.projects.create.path, async (req, res) => {
+  app.post(api.projects.create.path, isAuthenticated, async (req, res) => {
     try {
       const bodySchema = api.projects.create.input.extend({
         clientId: z.coerce.number().optional(),
@@ -213,7 +214,7 @@ export async function registerRoutes(
     }
   });
 
-  app.put(api.projects.update.path, async (req, res) => {
+  app.put(api.projects.update.path, isAuthenticated, async (req, res) => {
     try {
       const input = api.projects.update.input.parse(req.body);
       const updated = await storage.updateProject(Number(req.params.id), input);
@@ -228,12 +229,12 @@ export async function registerRoutes(
   });
 
   // --- Tasks ---
-  app.get(api.tasks.list.path, async (req, res) => {
+  app.get(api.tasks.list.path, isAuthenticated, async (req, res) => {
     const tasks = await storage.getTasksByProject(Number(req.params.projectId));
     res.json(tasks);
   });
 
-  app.post(api.tasks.create.path, async (req, res) => {
+  app.post(api.tasks.create.path, isAuthenticated, async (req, res) => {
     try {
       const body = api.tasks.create.input.extend({
         parentTaskId: z.coerce.number().optional(),
@@ -253,7 +254,7 @@ export async function registerRoutes(
     }
   });
 
-  app.put(api.tasks.update.path, async (req, res) => {
+  app.put(api.tasks.update.path, isAuthenticated, async (req, res) => {
     try {
       const taskId = Number(req.params.id);
       const input = api.tasks.update.input.parse(req.body);
@@ -288,7 +289,7 @@ export async function registerRoutes(
   });
 
   // --- Time stats (kunlik/haftalik) ---
-  app.get("/api/time/stats", async (req, res) => {
+  app.get("/api/time/stats", isAuthenticated, async (req, res) => {
     try {
       const from = req.query.from ? new Date(req.query.from as string) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
       const to = req.query.to ? new Date(req.query.to as string) : new Date();
@@ -307,7 +308,7 @@ export async function registerRoutes(
   });
 
   // --- Time Entries ---
-  app.post(api.timeEntries.create.path, async (req, res) => {
+  app.post(api.timeEntries.create.path, isAuthenticated, async (req, res) => {
     try {
       const input = api.timeEntries.create.input.parse(req.body);
       let userId = (req.user as any)?.claims?.sub || "system";
@@ -330,12 +331,12 @@ export async function registerRoutes(
   });
 
   // --- Transactions ---
-  app.get(api.transactions.list.path, async (req, res) => {
+  app.get(api.transactions.list.path, isAuthenticated, async (req, res) => {
     const txs = await storage.getTransactions();
     res.json(txs);
   });
 
-  app.post(api.transactions.create.path, async (req, res) => {
+  app.post(api.transactions.create.path, isAuthenticated, async (req, res) => {
     try {
       const input = api.transactions.create.input.extend({
         projectId: z.coerce.number().optional(),
@@ -352,12 +353,12 @@ export async function registerRoutes(
   });
 
   // --- Invoices ---
-  app.get(api.invoices.list.path, async (req, res) => {
+  app.get(api.invoices.list.path, isAuthenticated, async (req, res) => {
     const invoices = await storage.getInvoices();
     res.json(invoices);
   });
 
-  app.get("/api/invoices/next-number", async (req, res) => {
+  app.get("/api/invoices/next-number", isAuthenticated, async (req, res) => {
     try {
       const invoiceNumber = await storage.getNextInvoiceNumber();
       res.json({ invoiceNumber });
@@ -367,7 +368,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post(api.invoices.create.path, async (req, res) => {
+  app.post(api.invoices.create.path, isAuthenticated, async (req, res) => {
     try {
       const input = api.invoices.create.input.extend({
         projectId: z.coerce.number(),
@@ -400,7 +401,7 @@ export async function registerRoutes(
     }
   });
 
-  app.put("/api/invoices/:id", async (req, res) => {
+  app.put("/api/invoices/:id", isAuthenticated, async (req, res) => {
     try {
       const { status, amount } = req.body as { status?: string; amount?: string };
       const updated = await storage.updateInvoice(Number(req.params.id), { status, amount });
@@ -411,7 +412,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/invoices/:id/items", async (req, res) => {
+  app.get("/api/invoices/:id/items", isAuthenticated, async (req, res) => {
     try {
       const items = await storage.getInvoiceItems(Number(req.params.id));
       res.json(items);
@@ -420,7 +421,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/invoices/:id/items", async (req, res) => {
+  app.post("/api/invoices/:id/items", isAuthenticated, async (req, res) => {
     try {
       const body = z.object({
         title: z.string(),
@@ -448,7 +449,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/invoices/:invoiceId/items/:itemId", async (req, res) => {
+  app.delete("/api/invoices/:invoiceId/items/:itemId", isAuthenticated, async (req, res) => {
     try {
       const itemId = Number(req.params.itemId);
       const invoiceId = Number(req.params.invoiceId);
@@ -465,7 +466,7 @@ export async function registerRoutes(
   // --- PDF: Puppeteer — exact preview dimensions, no A4, no margins, scale 1 ---
   const DEFAULT_PDF_WIDTH = 794;
   const DEFAULT_PDF_HEIGHT = 1123;
-  app.post("/api/invoices/:id/generate-pdf", async (req, res) => {
+  app.post("/api/invoices/:id/generate-pdf", isAuthenticated, async (req, res) => {
     try {
       const id = Number(req.params.id);
       const body = (req.body || {}) as { width?: number; height?: number };
@@ -534,7 +535,7 @@ export async function registerRoutes(
     }
   }
 
-  app.get("/api/settings/invoice", async (_req, res) => {
+  app.get("/api/settings/invoice", isAuthenticated, async (_req, res) => {
     try {
       const row = await storage.getInvoiceSettings();
       const defaults = {
@@ -559,7 +560,7 @@ export async function registerRoutes(
     }
   });
 
-  app.put("/api/settings/invoice", async (req, res) => {
+  app.put("/api/settings/invoice", isAuthenticated, async (req, res) => {
     try {
       const body = req.body as unknown;
       const input = z.object({
@@ -591,7 +592,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/invoices/:id/pdf", async (req, res) => {
+  app.get("/api/invoices/:id/pdf", isAuthenticated, async (req, res) => {
     try {
       const id = Number(req.params.id);
       const filePath = getInvoicePdfPath(id);
@@ -605,13 +606,15 @@ export async function registerRoutes(
   });
 
   // --- Analytics Report ---
-  app.get("/api/analytics/report", async (_req, res) => {
+  app.get("/api/analytics/report", isAuthenticated, async (_req, res) => {
     try {
-      const [projects, txs, clients] = await Promise.all([
+      const [projects, txs, clients, currencyResult] = await Promise.all([
         storage.getProjects(),
         storage.getTransactions(),
         storage.getClients(),
+        getUsdToUzsRate(() => storage.getManualUsdToUzs()),
       ]);
+      const usdToUzs = currencyResult.rate;
       const now = new Date();
       const byMonth: Record<string, { revenue: number; expense: number }> = {};
       for (let i = 11; i >= 0; i--) {
@@ -622,18 +625,19 @@ export async function registerRoutes(
       txs.forEach(t => {
         const key = new Date(t.date).toISOString().slice(0, 7);
         if (!byMonth[key]) byMonth[key] = { revenue: 0, expense: 0 };
-        if (t.type === "income") byMonth[key].revenue += Number(t.amount);
-        else byMonth[key].expense += Number(t.amount);
+        const amt = toUzs(t, usdToUzs);
+        if (t.type === "income") byMonth[key].revenue += amt;
+        else byMonth[key].expense += amt;
       });
       const byClient: { clientId: number; clientName: string; revenue: number }[] = [];
       clients.forEach(c => {
-        const rev = txs.filter(t => { const p = projects.find(x => x.id === t.projectId); return t.type === "income" && p && p.clientId === c.id; }).reduce((s, t) => s + Number(t.amount), 0);
+        const rev = txs.filter(t => { const p = projects.find(x => x.id === t.projectId); return t.type === "income" && p && p.clientId === c.id; }).reduce((s, t) => s + toUzs(t, usdToUzs), 0);
         if (rev > 0) byClient.push({ clientId: c.id, clientName: c.name, revenue: rev });
       });
       const byProject: { projectId: number; projectName: string; income: number; expense: number; profit: number }[] = [];
       projects.forEach(p => {
-        const income = txs.filter(t => t.projectId === p.id && t.type === "income").reduce((s, t) => s + Number(t.amount), 0);
-        const expense = txs.filter(t => t.projectId === p.id && t.type === "expense").reduce((s, t) => s + Number(t.amount), 0);
+        const income = txs.filter(t => t.projectId === p.id && t.type === "income").reduce((s, t) => s + toUzs(t, usdToUzs), 0);
+        const expense = txs.filter(t => t.projectId === p.id && t.type === "expense").reduce((s, t) => s + toUzs(t, usdToUzs), 0);
         byProject.push({ projectId: p.id, projectName: p.name, income, expense, profit: income - expense });
       });
       res.json({ byMonth: Object.entries(byMonth), byClient, byProject });
@@ -644,7 +648,7 @@ export async function registerRoutes(
   });
 
   // --- In-app notifications (deadline, payment alerts) ---
-  app.get("/api/notifications", async (_req, res) => {
+  app.get("/api/notifications", isAuthenticated, async (_req, res) => {
     try {
       const projects = await storage.getProjects();
       const now = new Date();
@@ -675,7 +679,7 @@ export async function registerRoutes(
   });
 
   // --- Calendar events: boshlanish (yashil) va tugash/muddat (qizil) ---
-  app.get("/api/calendar/events", async (_req, res) => {
+  app.get("/api/calendar/events", isAuthenticated, async (_req, res) => {
     try {
       const projects = await storage.getProjects();
       const events: { id: string; projectId: number; title: string; date: string; type: "start" | "deadline"; status: string }[] = [];
@@ -705,7 +709,7 @@ export async function registerRoutes(
   });
 
   // --- AI Risk Analyzer ---
-  app.post(api.ai.analyzeRisk.path, async (req, res) => {
+  app.post(api.ai.analyzeRisk.path, isAuthenticated, async (req, res) => {
     try {
       const project = await storage.getProject(Number(req.params.id));
       if (!project) return res.status(404).json({ message: "Project not found" });
