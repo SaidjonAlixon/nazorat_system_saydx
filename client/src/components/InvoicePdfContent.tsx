@@ -54,7 +54,6 @@ const styles = {
     fontSize: "11px",
     lineHeight: 1.5,
     color: "#1a1a1a",
-    overflow: "hidden" as const,
   },
   header: {
     display: "flex",
@@ -78,13 +77,16 @@ const styles = {
     letterSpacing: "1px",
     textTransform: "uppercase" as const,
   },
-  grid2: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", marginBottom: "20px" },
+  grid2: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", marginBottom: "20px", minWidth: 0 } as React.CSSProperties,
   block: {
     padding: "14px 16px",
     backgroundColor: "#f8fafc",
     borderRadius: "8px",
     border: "1px solid #e2e8f0",
-  },
+    minWidth: 0,
+    overflowWrap: "break-word",
+    wordBreak: "break-word",
+  } as React.CSSProperties,
   blockTitle: {
     fontSize: "10px",
     fontWeight: 600,
@@ -95,7 +97,13 @@ const styles = {
     paddingBottom: "6px",
     borderBottom: "1px solid #e2e8f0",
   },
-  row: { marginBottom: "4px", color: "#334155" },
+  row: {
+    marginBottom: "4px",
+    color: "#334155",
+    overflowWrap: "break-word",
+    wordBreak: "break-word",
+    minWidth: 0,
+  } as React.CSSProperties,
   table: {
     width: "100%",
     borderCollapse: "collapse" as const,
@@ -103,6 +111,7 @@ const styles = {
     borderRadius: "8px",
     overflow: "hidden" as const,
     border: "1px solid #e2e8f0",
+    tableLayout: "fixed" as const,
   },
   th: {
     padding: "12px 14px",
@@ -116,22 +125,33 @@ const styles = {
   td: {
     padding: "10px 14px",
     borderBottom: "1px solid #f1f5f9",
-  },
+    overflowWrap: "break-word",
+    wordBreak: "break-word",
+  } as React.CSSProperties,
   tdRight: { textAlign: "right" as const },
   totals: {
     display: "flex",
     flexDirection: "column" as const,
-    alignItems: "flex-end",
+    alignItems: "stretch",
     gap: "6px",
     padding: "14px 20px",
     backgroundColor: "#f0f9ff",
     borderRadius: "8px",
     border: "1px solid #bae6fd",
     marginBottom: "20px",
-    maxWidth: "280px",
+    width: "100%",
+    maxWidth: "380px",
     marginLeft: "auto",
-  },
-  totalRow: { display: "flex", justifyContent: "space-between", width: "100%", gap: "40px" },
+    boxSizing: "border-box" as const,
+  } as React.CSSProperties,
+  totalRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    width: "100%",
+    gap: "24px",
+    overflowWrap: "break-word",
+    wordBreak: "break-word",
+  } as React.CSSProperties,
   totalLabel: { color: "#475569", fontWeight: 500 },
   totalValue: { fontWeight: 600, color: "#0f172a" },
   grandTotal: {
@@ -144,14 +164,19 @@ const styles = {
     width: "100%",
     display: "flex",
     justifyContent: "space-between",
-  },
+    gap: "24px",
+    overflowWrap: "break-word",
+    wordBreak: "break-word",
+  } as React.CSSProperties,
   paymentBlock: {
     padding: "14px 16px",
     backgroundColor: "#f8fafc",
     borderRadius: "8px",
     border: "1px solid #e2e8f0",
     marginBottom: "24px",
-  },
+    overflowWrap: "break-word",
+    wordBreak: "break-word",
+  } as React.CSSProperties,
   footer: {
     display: "flex",
     alignItems: "flex-end",
@@ -262,11 +287,11 @@ export function InvoicePdfContent({
       <table style={styles.table}>
         <thead>
           <tr>
-            <th style={{ ...styles.th, width: "40px" }}>T/r</th>
-            <th style={styles.th}>Xizmat nomi</th>
-            <th style={{ ...styles.th, ...styles.tdRight, width: "80px" }}>Soni</th>
+            <th style={{ ...styles.th, width: "48px" }}>T/r</th>
+            <th style={{ ...styles.th, width: "auto" }}>Xizmat nomi</th>
+            <th style={{ ...styles.th, ...styles.tdRight, width: "64px" }}>Soni</th>
             <th style={{ ...styles.th, ...styles.tdRight, width: "100px" }}>Narx</th>
-            <th style={{ ...styles.th, ...styles.tdRight, width: "110px" }}>Summa</th>
+            <th style={{ ...styles.th, ...styles.tdRight, width: "130px" }}>Summa</th>
           </tr>
         </thead>
         <tbody>
@@ -289,19 +314,19 @@ export function InvoicePdfContent({
       <div style={styles.totals}>
         <div style={styles.totalRow}>
           <span style={styles.totalLabel}>Subtotal:</span>
-          <span style={styles.totalValue}>{formatNum(subtotal)} {invoice.currency}</span>
+          <span style={{ ...styles.totalValue, flexShrink: 0 }}>{formatNum(subtotal)} {invoice.currency}</span>
         </div>
         <div style={styles.totalRow}>
           <span style={styles.totalLabel}>Tax:</span>
-          <span style={styles.totalValue}>{formatNum(tax)} {invoice.currency}</span>
+          <span style={{ ...styles.totalValue, flexShrink: 0 }}>{formatNum(tax)} {invoice.currency}</span>
         </div>
         <div style={styles.totalRow}>
           <span style={styles.totalLabel}>Discount:</span>
-          <span style={styles.totalValue}>{formatNum(discount)} {invoice.currency}</span>
+          <span style={{ ...styles.totalValue, flexShrink: 0 }}>{formatNum(discount)} {invoice.currency}</span>
         </div>
         <div style={styles.grandTotal}>
           <span>JAMI:</span>
-          <span>{formatNum(total)} {invoice.currency}</span>
+          <span style={{ flexShrink: 0 }}>{formatNum(total)} {invoice.currency}</span>
         </div>
       </div>
 
