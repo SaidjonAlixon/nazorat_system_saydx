@@ -31,6 +31,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [location] = useLocation();
   const { user, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">(() => (typeof document !== "undefined" && document.documentElement.classList.contains("light") ? "light" : "dark"));
   const { data: notifications = [] } = useQuery({
     queryKey: ["/api/notifications"],
@@ -100,7 +101,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
       <div className="p-4 border-t border-white/5">
         <div className="flex items-center gap-2 mb-4">
-          <Popover>
+          <Popover open={isNotificationsOpen} onOpenChange={setIsNotificationsOpen}>
             <PopoverTrigger asChild>
               <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-white">
                 <Bell className="w-5 h-5" />
@@ -118,7 +119,11 @@ export function AppLayout({ children }: AppLayoutProps) {
                   <p className="p-3 text-muted-foreground text-sm">Ogohlantirishlar yo'q</p>
                 ) : (
                   notifications.slice(0, 15).map((a: { projectId: number; title: string; message: string; type: string }) => (
-                    <Link key={`${a.projectId}-${a.type}-${a.message}`} href={`/projects/${a.projectId}`}>
+                    <Link
+                      key={`${a.projectId}-${a.type}-${a.message}`}
+                      href={`/projects/${a.projectId}`}
+                      onClick={() => setIsNotificationsOpen(false)}
+                    >
                       <div className="p-3 hover:bg-white/5 cursor-pointer border-b border-white/5 last:border-0">
                         <p className="text-sm font-medium text-white truncate">{a.title}</p>
                         <p className="text-xs text-muted-foreground">{a.message}</p>

@@ -15,6 +15,8 @@ export function useTasks(projectId: number) {
       return api.tasks.list.responses[200].parse(await res.json());
     },
     enabled: !!projectId,
+    retry: 2,
+    retryDelay: 2000,
   });
 }
 

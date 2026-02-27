@@ -19,7 +19,7 @@ export default function ProjectDetails() {
   const projectId = Number(params.id);
   
   const { data: project, isLoading: isProjectLoading } = useProject(projectId);
-  const { data: tasks, isLoading: isTasksLoading } = useTasks(projectId);
+  const { data: tasks, isLoading: isTasksLoading, isError: isTasksError, refetch: refetchTasks } = useTasks(projectId);
   const createTask = useCreateTask(projectId);
   const updateTask = useUpdateTask(projectId);
   const updateProject = useUpdateProject(projectId);
@@ -91,11 +91,23 @@ export default function ProjectDetails() {
     return Math.round((done / rootTasks.length) * 100);
   }, [rootTasks]);
 
-  if (isProjectLoading || isTasksLoading) {
+  if (isProjectLoading || (isTasksLoading && !tasks)) {
     return <AppLayout><LoadingSpinner message="Loyiha tafsilotlari yuklanmoqda..." /></AppLayout>;
   }
 
   if (!project) return <AppLayout><div className="text-white">Loyiha topilmadi.</div></AppLayout>;
+
+  if (isTasksError) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col items-center justify-center py-16 gap-4">
+          <p className="text-destructive font-medium">Vazifalar yuklanmadi. Server xatosi.</p>
+          <Button variant="outline" onClick={() => refetchTasks()}>Qayta yuklash</Button>
+          <Link href="/projects" className="text-sm text-muted-foreground hover:text-white">← Loyihalar ro'yxatiga</Link>
+        </div>
+      </AppLayout>
+    );
+  }
 
   const handleCreateTask = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
