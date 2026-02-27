@@ -7,14 +7,13 @@
 .invoice-pdf-a4.invoice-pdf-content {
   box-sizing: border-box;
   width: 210mm;
-  min-height: 297mm;
   max-width: 210mm;
-  padding: 15mm 15mm 20mm 15mm;
+  padding: 12mm 15mm 15mm 15mm;
   margin: 0;
   background: #fff;
   font-family: Arial, Helvetica, sans-serif;
-  font-size: 10pt;
-  line-height: 1.4;
+  font-size: 9pt;
+  line-height: 1.35;
   color: #1a1a1a;
   overflow: visible;
 }
@@ -33,40 +32,40 @@
   overflow: visible;
 }
 
-/* Header */
+/* Header — compact */
 .invoice-pdf-a4__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
   max-width: 100%;
-  margin-bottom: 12pt;
-  padding-bottom: 10pt;
+  margin-bottom: 8pt;
+  padding-bottom: 6pt;
   border-bottom: 2px solid #0ea5e9;
   flex-wrap: wrap;
-  gap: 8pt;
+  gap: 6pt;
 }
 
 .invoice-pdf-a4__logo {
-  height: 72pt;
+  height: 52pt;
   width: auto;
   max-width: 100%;
 }
 
 .invoice-pdf-a4__title {
-  font-size: 14pt;
+  font-size: 12pt;
   font-weight: 600;
   color: #0f172a;
   text-transform: uppercase;
   letter-spacing: 0.5pt;
 }
 
-/* Two-column grid */
+/* Two-column grid — compact */
 .invoice-pdf-a4__grid2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12pt;
-  margin-bottom: 12pt;
+  gap: 8pt;
+  margin-bottom: 8pt;
   width: 100%;
   max-width: 100%;
   min-width: 0;
@@ -75,7 +74,7 @@
 .invoice-pdf-a4__block {
   min-width: 0;
   max-width: 100%;
-  padding: 10pt 12pt;
+  padding: 6pt 10pt;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 4pt;
@@ -84,32 +83,32 @@
 }
 
 .invoice-pdf-a4__block-title {
-  font-size: 8pt;
+  font-size: 7pt;
   font-weight: 700;
   color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.5pt;
-  margin-bottom: 6pt;
-  padding-bottom: 4pt;
+  margin-bottom: 4pt;
+  padding-bottom: 3pt;
   border-bottom: 1px solid #e2e8f0;
 }
 
 .invoice-pdf-a4__row {
-  margin-bottom: 3pt;
+  margin-bottom: 2pt;
   color: #334155;
   overflow-wrap: break-word;
   word-break: break-word;
-  font-size: 9pt;
+  font-size: 8pt;
 }
 
-/* Table — bounded container, no overflow */
+/* Table — bounded, compact */
 .invoice-pdf-a4__table-wrap {
   width: 100%;
   max-width: 100%;
   overflow: hidden;
-  margin-bottom: 12pt;
+  margin-bottom: 8pt;
   border: 1px solid #e2e8f0;
-  border-radius: 6pt;
+  border-radius: 4pt;
   border-top: 2px solid #0ea5e9;
 }
 
@@ -118,12 +117,12 @@
   max-width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-  font-size: 9pt;
+  font-size: 8pt;
 }
 
 .invoice-pdf-a4__table th,
 .invoice-pdf-a4__table td {
-  padding: 8pt 10pt;
+  padding: 5pt 8pt;
   border: 1px solid #e2e8f0;
   overflow-wrap: break-word;
   word-break: break-word;
@@ -133,7 +132,7 @@
   background: #0ea5e9;
   color: #fff;
   font-weight: 700;
-  font-size: 8pt;
+  font-size: 7pt;
   text-transform: uppercase;
 }
 
@@ -158,18 +157,17 @@
   background: #f8fafc;
 }
 
-/* Summary box — keep with table when page breaks */
+/* Summary box */
 .invoice-pdf-a4__totals {
   width: 100%;
   max-width: 180mm;
   margin-left: auto;
-  margin-bottom: 12pt;
-  padding: 10pt 14pt;
+  margin-bottom: 8pt;
+  padding: 8pt 12pt;
   background: #f0f9ff;
   border: 1px solid #bae6fd;
-  border-radius: 6pt;
+  border-radius: 4pt;
   page-break-inside: avoid;
-  page-break-after: avoid;
 }
 
 .invoice-pdf-a4__total-row {
@@ -187,10 +185,10 @@
 }
 
 .invoice-pdf-a4__grand-total {
-  margin-top: 6pt;
-  padding-top: 8pt;
+  margin-top: 4pt;
+  padding-top: 6pt;
   border-top: 2px solid #bae6fd;
-  font-size: 12pt;
+  font-size: 10pt;
   font-weight: 700;
   color: #0ea5e9;
   display: flex;
@@ -207,33 +205,33 @@
 .invoice-pdf-a4__payment {
   width: 100%;
   max-width: 100%;
-  padding: 10pt 12pt;
+  padding: 6pt 10pt;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 4pt;
-  margin-bottom: 12pt;
+  margin-bottom: 8pt;
   overflow-wrap: break-word;
   word-break: break-word;
 }
 
-/* Footer / Signature */
+/* Footer / Signature — compact */
 .invoice-pdf-a4__footer {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
   max-width: 100%;
-  margin-top: 16pt;
-  padding-top: 12pt;
+  margin-top: 10pt;
+  padding-top: 8pt;
   border-top: 1px solid #e2e8f0;
-  gap: 20pt;
+  gap: 14pt;
 }
 
 .invoice-pdf-a4__signature-block {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 20pt;
+  gap: 14pt;
 }
 
 /* Outer blue circle around stamp */
@@ -241,23 +239,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 90pt;
-  height: 90pt;
+  width: 64pt;
+  height: 64pt;
   border-radius: 50%;
-  border: 3px solid #0ea5e9;
+  border: 2px solid #0ea5e9;
   flex-shrink: 0;
 }
 
 .invoice-pdf-a4__stamp {
-  width: 72pt;
-  height: 72pt;
+  width: 52pt;
+  height: 52pt;
   border-radius: 50%;
   border: 2px solid #0ea5e9;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 9pt;
+  font-size: 7pt;
   font-weight: 700;
   color: #0ea5e9;
   flex-shrink: 0;
@@ -265,26 +263,26 @@
 
 .invoice-pdf-a4__signature {
   text-align: right;
-  font-size: 9pt;
+  font-size: 8pt;
   color: #475569;
   margin-left: 12pt;
   margin-top: 8pt;
 }
 
 .invoice-pdf-a4__signature img {
-  max-width: 80pt;
+  max-width: 60pt;
   height: auto;
-  margin-bottom: 4pt;
+  margin-bottom: 2pt;
 }
 
-/* Meta footer — must be clearly visible */
+/* Meta footer */
 .invoice-pdf-a4__meta {
   text-align: center;
-  font-size: 10pt;
+  font-size: 9pt;
   color: #475569;
-  margin-top: 16pt;
-  padding-top: 12pt;
-  padding-bottom: 8pt;
+  margin-top: 10pt;
+  padding-top: 8pt;
+  padding-bottom: 4pt;
   border-top: 1px solid #e2e8f0;
   overflow-wrap: break-word;
   word-break: break-word;
@@ -315,11 +313,13 @@
     page-break-inside: avoid;
   }
 
-  /* Totals, payment, footer — avoid awkward splits */
-  .invoice-pdf-a4__totals,
-  .invoice-pdf-a4__payment {
+  .invoice-pdf-a4__totals {
     page-break-inside: avoid;
-    page-break-after: avoid;
+  }
+
+  /* Footer stays with payment when possible */
+  .invoice-pdf-a4__payment + .invoice-pdf-a4__footer {
+    page-break-before: avoid;
   }
 
   .invoice-pdf-a4__footer {
