@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { z } from "zod";
 import { storage } from "../../lib.js";
-import { api } from "../../../shared/routes.js";
+import { api } from "../../shared/routes.js";
 
 /**
  * PUT /api/tasks/:id
