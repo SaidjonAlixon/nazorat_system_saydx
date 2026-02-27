@@ -1,8 +1,18 @@
 /**
- * A4 Invoice PDF — Strict layout
- * Page: 210mm × 297mm | Margins: 15mm | Content: 180mm × 267mm
- * No scaling, no overflow, fixed proportions.
+ * Premium minimal corporate invoice — A4 (210mm × 297mm)
+ * Stripe / Notion / Linear style
  */
+
+:root {
+  --inv-primary: #1f6feb;
+  --inv-text: #111827;
+  --inv-text-muted: #6b7280;
+  --inv-border: #e5e7eb;
+  --inv-bg: #f9fafb;
+  --inv-space: 6px;
+  --inv-space-lg: 9px;
+  --inv-radius: 6px;
+}
 
 *,
 *::before,
@@ -18,10 +28,10 @@
   padding: 15mm;
   margin: 0;
   background: #fff;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   font-size: 9pt;
-  line-height: 1.4;
-  color: #1a1a1a;
+  line-height: 1.5;
+  color: var(--inv-text);
   overflow: visible;
 }
 
@@ -31,7 +41,6 @@
   box-sizing: border-box;
 }
 
-/* Content wrapper — exactly 180mm */
 .invoice-pdf-a4__inner {
   width: 180mm;
   max-width: 180mm;
@@ -39,100 +48,84 @@
   overflow: visible;
 }
 
-/* Header */
+/* Header — compact, thin divider */
 .invoice-pdf-a4__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  max-width: 100%;
-  margin-bottom: 8pt;
-  padding-bottom: 6pt;
-  border-bottom: 2px solid #0ea5e9;
-  flex-wrap: wrap;
-  gap: 6pt;
+  margin-bottom: var(--inv-space-lg);
+  padding-bottom: var(--inv-space);
+  border-bottom: 1px solid var(--inv-border);
 }
 
 .invoice-pdf-a4__logo {
-  height: 52pt;
+  height: 32px;
   width: auto;
-  max-width: 100%;
+  max-width: 140px;
 }
 
 .invoice-pdf-a4__title {
-  font-size: 12pt;
-  font-weight: 600;
-  color: #0f172a;
-  text-transform: uppercase;
-  letter-spacing: 0.5pt;
+  font-size: 11pt;
+  font-weight: 700;
+  color: var(--inv-text);
+  letter-spacing: -0.02em;
 }
 
-/* Two-column grid — 4 ta card uzunroq, sarlavhalar sig'adi */
+/* Cards — flat, subtle */
 .invoice-pdf-a4__grid2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 4pt;
-  margin-bottom: 8pt;
+  gap: var(--inv-space);
+  margin-bottom: var(--inv-space);
   width: 100%;
-  max-width: 100%;
 }
 
 .invoice-pdf-a4__block {
   min-width: 0;
-  max-width: 100%;
-  padding: 6pt 12pt;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 4pt;
+  padding: 12px 16px;
+  background: var(--inv-bg);
+  border: 1px solid var(--inv-border);
+  border-radius: var(--inv-radius);
   overflow-wrap: break-word;
-  word-wrap: break-word;
-  word-break: break-word;
 }
 
 .invoice-pdf-a4__block-title {
-  font-size: 6.5pt;
-  font-weight: 700;
-  color: #64748b;
+  font-size: 6pt;
+  font-weight: 600;
+  color: var(--inv-text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.5pt;
-  margin-bottom: 4pt;
-  padding-bottom: 3pt;
-  border-bottom: 1px solid #e2e8f0;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
 }
 
 .invoice-pdf-a4__block-title--payment {
-  margin-bottom: 6pt;
+  margin-bottom: 8px;
 }
 
 .invoice-pdf-a4__row {
-  margin-bottom: 2pt;
-  color: #334155;
-  overflow-wrap: break-word;
-  word-wrap: break-word;
-  word-break: break-word;
+  margin-bottom: 4px;
+  color: var(--inv-text);
   font-size: 8pt;
-  max-width: 100%;
+  font-weight: 400;
 }
 
 .invoice-pdf-a4__row--note {
-  margin-top: 6pt;
-  color: #64748b;
+  margin-top: 8px;
+  color: var(--inv-text-muted);
 }
 
-/* Table — fixed layout, 5% | 45% | 15% | 15% | 20% */
+/* Table — cleaner header */
 .invoice-pdf-a4__table-wrap {
   width: 100%;
-  max-width: 100%;
-  overflow: visible;
-  margin-bottom: 8pt;
-  border: 1px solid #e2e8f0;
-  border-radius: 4pt;
-  border-top: 2px solid #0ea5e9;
+  margin-bottom: var(--inv-space-lg);
+  border: 1px solid var(--inv-border);
+  border-radius: var(--inv-radius);
+  overflow: hidden;
 }
 
 .invoice-pdf-a4__table {
   width: 100%;
-  max-width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
   font-size: 8pt;
@@ -140,27 +133,25 @@
 
 .invoice-pdf-a4__table th,
 .invoice-pdf-a4__table td {
-  padding: 6pt 8pt;
-  border: 1px solid #e2e8f0;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--inv-border);
   overflow-wrap: break-word;
-  word-wrap: break-word;
-  word-break: break-word;
 }
 
 .invoice-pdf-a4__table thead th {
-  background: #0ea5e9;
+  background: var(--inv-primary);
   color: #fff;
-  font-weight: 700;
+  font-weight: 600;
   font-size: 7pt;
   text-transform: uppercase;
-  border-bottom: 2px solid #0284c7;
+  letter-spacing: 0.05em;
 }
 
-/* Ko'k sarlavhalar o'z qatoriga, pasdagi ma'lumotlar bilan to'g'risida */
 .invoice-pdf-a4__table thead th.col-num,
 .invoice-pdf-a4__table thead th.col-name {
   text-align: left;
 }
+
 .invoice-pdf-a4__table thead th.col-qty,
 .invoice-pdf-a4__table thead th.col-price,
 .invoice-pdf-a4__table thead th.col-total {
@@ -169,6 +160,10 @@
 
 .invoice-pdf-a4__table td {
   background: #fff;
+}
+
+.invoice-pdf-a4__table tbody tr:nth-child(even) td {
+  background: var(--inv-bg);
 }
 
 .invoice-pdf-a4__table .col-num { width: 5%; }
@@ -183,114 +178,92 @@
   page-break-inside: avoid;
 }
 
-.invoice-pdf-a4__table tbody tr:nth-child(even) {
-  background: #f8fafc;
-}
-
-/* Summary box */
+/* Summary — right-aligned, thin divider */
 .invoice-pdf-a4__totals {
   width: 100%;
-  max-width: 100%;
-  margin-bottom: 8pt;
-  padding: 8pt 12pt;
-  background: #f0f9ff;
-  border: 1px solid #bae6fd;
-  border-radius: 4pt;
-  page-break-inside: avoid;
+  max-width: 200px;
+  margin-left: auto;
+  margin-bottom: var(--inv-space-lg);
+  padding: 0;
 }
 
 .invoice-pdf-a4__total-row {
   display: flex;
   justify-content: space-between;
-  width: 100%;
-  max-width: 100%;
-  gap: 16pt;
-  margin-bottom: 4pt;
-  overflow-wrap: break-word;
-  word-wrap: break-word;
-  word-break: break-word;
+  margin-bottom: 4px;
+  font-size: 8pt;
+}
+
+.invoice-pdf-a4__total-row span:first-child {
+  color: var(--inv-text-muted);
+  font-weight: 400;
 }
 
 .invoice-pdf-a4__total-row span:last-child {
-  flex-shrink: 0;
+  font-weight: 500;
+  color: var(--inv-text);
 }
 
 .invoice-pdf-a4__grand-total {
-  margin-top: 4pt;
-  padding-top: 6pt;
-  border-top: 2px solid #bae6fd;
-  font-size: 10pt;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--inv-border);
+  font-size: 9pt;
   font-weight: 700;
-  color: #0ea5e9;
+  color: var(--inv-primary);
   display: flex;
   justify-content: space-between;
-  width: 100%;
-  max-width: 100%;
-  gap: 16pt;
 }
 
-.invoice-pdf-a4__grand-total span:last-child {
-  flex-shrink: 0;
-}
-
-/* Payment block */
+/* Payment — flat */
 .invoice-pdf-a4__payment {
   width: 100%;
-  max-width: 100%;
-  padding: 6pt 10pt;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 4pt;
-  margin-bottom: 8pt;
-  overflow-wrap: break-word;
-  word-wrap: break-word;
-  word-break: break-word;
+  padding: 12px 16px;
+  background: var(--inv-bg);
+  border: 1px solid var(--inv-border);
+  border-radius: var(--inv-radius);
+  margin-bottom: var(--inv-space-lg);
 }
 
-/* Footer / Signature */
+/* Footer — signature & stamp */
 .invoice-pdf-a4__footer {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
-  max-width: 100%;
-  margin-top: 10pt;
-  padding-top: 8pt;
-  border-top: 1px solid #e2e8f0;
-  gap: 14pt;
+  margin-top: var(--inv-space-lg);
+  padding-top: var(--inv-space-lg);
+  border-top: 1px solid var(--inv-border);
 }
 
 .invoice-pdf-a4__signature-block {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 14pt;
+  gap: 24px;
 }
 
 .invoice-pdf-a4__stamp-outer {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 80pt;
-  height: 80pt;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  border: 2px solid #0ea5e9;
-  flex-shrink: 0;
+  border: 2px solid var(--inv-primary);
 }
 
 .invoice-pdf-a4__stamp {
-  width: 66pt;
-  height: 66pt;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
-  border: 2px solid #0ea5e9;
+  border: 2px solid var(--inv-primary);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 7pt;
+  font-size: 5pt;
   font-weight: 700;
-  color: #0ea5e9;
-  flex-shrink: 0;
+  color: var(--inv-primary);
 }
 
 .invoice-pdf-a4__signature {
@@ -299,50 +272,35 @@
   align-items: flex-end;
   text-align: right;
   font-size: 8pt;
-  color: #475569;
-  margin-left: 12pt;
-  margin-top: 8pt;
+  color: var(--inv-text-muted);
 }
 
-/* Imzo ism familiyadan yuqoriga (3-rasm) */
 .invoice-pdf-a4__signature img {
-  max-width: 60pt;
+  max-width: 48px;
   height: auto;
-  margin-bottom: 6pt;
+  margin-bottom: 6px;
 }
 
-/* Meta footer — pechatdan 1cm pastda */
+/* Meta footer — subtle */
 .invoice-pdf-a4__meta {
   text-align: center;
-  font-size: 9pt;
-  color: #475569;
-  margin-top: 28pt;
-  padding-top: 8pt;
-  padding-bottom: 4pt;
-  border-top: 1px solid #e2e8f0;
-  overflow-wrap: break-word;
-  word-wrap: break-word;
-  word-break: break-word;
-  width: 100%;
-  max-width: 100%;
+  font-size: 7pt;
+  color: var(--inv-text-muted);
+  margin-top: 24px;
+  padding-top: var(--inv-space);
+  border-top: 1px solid var(--inv-border);
 }
 
-/* @page */
+/* Print */
 @page {
   margin: 10mm;
   size: A4 portrait;
 }
 
-/* Print / PDF media */
 @media print {
   .invoice-pdf-a4.invoice-pdf-content {
     width: 210mm;
-    max-width: 210mm;
     padding: 15mm;
-    margin: 0;
-    overflow: visible;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
   }
 
   .invoice-pdf-a4__inner {
@@ -358,14 +316,8 @@
     page-break-inside: avoid;
   }
 
-  .invoice-pdf-a4__totals {
-    page-break-inside: avoid;
-  }
-
-  .invoice-pdf-a4__payment {
-    page-break-inside: avoid;
-  }
-
+  .invoice-pdf-a4__totals,
+  .invoice-pdf-a4__payment,
   .invoice-pdf-a4__footer {
     page-break-inside: avoid;
   }
