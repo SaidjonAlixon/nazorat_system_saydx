@@ -14,7 +14,7 @@ import {
   timeEntries,
   transactions,
   invoices
-} from './schema';
+} from './schema.js';
 
 export const errorSchemas = {
   validation: z.object({
