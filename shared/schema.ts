@@ -4,11 +4,11 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // --- Export models from integrations ---
-export * from "./models/auth";
-export * from "./models/chat";
+export * from "./models/auth.ts";
+export * from "./models/chat.ts";
 
 // We need to import users to use them in relations
-import { users } from "./models/auth";
+import { users } from "./models/auth.ts";
 
 // --- Application Tables ---
 
