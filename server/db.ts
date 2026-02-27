@@ -10,8 +10,11 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
+const url = process.env.DATABASE_URL!;
+const needsSsl = url.includes("rlwy.net") || process.env.NODE_ENV === "production";
+
 export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : undefined,
+  connectionString: url,
+  ssl: needsSsl ? { rejectUnauthorized: false } : undefined,
 });
 export const db = drizzle(pool, { schema });
