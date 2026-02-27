@@ -183,9 +183,11 @@ export function InvoicePdfContent({
         {/* Footer / Signature */}
         <div className="invoice-pdf-a4__footer">
           <div className="invoice-pdf-a4__signature-block">
-            <div className="invoice-pdf-a4__stamp">
-              <span>SAYD.X</span>
-              <span>VERIFIED</span>
+            <div className="invoice-pdf-a4__stamp-outer">
+              <div className="invoice-pdf-a4__stamp">
+                <span>SAYD.X</span>
+                <span>VERIFIED</span>
+              </div>
             </div>
             <div className="invoice-pdf-a4__signature">
               <img src="/imzo.PNG" alt="Imzo" />
