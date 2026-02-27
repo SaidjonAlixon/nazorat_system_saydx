@@ -1,15 +1,15 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { z } from "zod";
 import { storage } from "../../_lib";
-import { api } from "../../../shared/routes";
+import { api } from "../../shared/routes";
 
 /**
- * POST /api/tasks/:taskId/time-entries
+ * POST /api/tasks/:id/time-entries
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const taskId = Number((req.query as { taskId?: string }).taskId);
-  if (!taskId || Number.isNaN(taskId)) {
-    return res.status(400).json({ message: "Invalid taskId" });
+  const id = Number((req.query as { id?: string }).id);
+  if (!id || Number.isNaN(id)) {
+    return res.status(400).json({ message: "Invalid task id" });
   }
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
@@ -22,7 +22,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (firstId) userId = firstId;
     const entry = await storage.createTimeEntry({
       ...input,
-      taskId,
+      taskId: id,
       userId,
     });
     return res.status(201).json(entry);

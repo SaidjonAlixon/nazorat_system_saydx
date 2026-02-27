@@ -1,22 +1,22 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { z } from "zod";
 import { storage } from "../../_lib";
-import { api } from "../../../shared/routes";
+import { api } from "../../shared/routes";
 
 /**
- * GET/POST /api/projects/:projectId/tasks
+ * GET/POST /api/projects/:id/tasks
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const projectId = Number((req.query as { projectId?: string }).projectId);
-  if (!projectId || Number.isNaN(projectId)) {
-    return res.status(400).json({ message: "Invalid projectId" });
+  const id = Number((req.query as { id?: string }).id);
+  if (!id || Number.isNaN(id)) {
+    return res.status(400).json({ message: "Invalid project id" });
   }
   if (req.method === "GET") {
     try {
-      const tasks = await storage.getTasksByProject(projectId);
+      const tasks = await storage.getTasksByProject(id);
       return res.json(tasks);
     } catch (err) {
-      console.error("[api/projects/:projectId/tasks GET]", err);
+      console.error("[api/projects/:id/tasks GET]", err);
       return res.status(500).json({ message: "Internal Error" });
     }
   }
@@ -28,7 +28,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const { parentTaskId, ...rest } = body;
       const task = await storage.createTask({
         ...rest,
-        projectId,
+        projectId: id,
         ...(parentTaskId != null && { parentTaskId }),
       });
       return res.status(201).json(task);
