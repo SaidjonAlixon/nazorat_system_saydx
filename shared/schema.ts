@@ -1,14 +1,36 @@
 import { sql, relations } from "drizzle-orm";
-import { pgTable, text, serial, integer, boolean, timestamp, numeric, varchar, foreignKey } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, numeric, varchar, foreignKey, index, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// --- Export models from integrations ---
-export * from "./models/auth.ts";
-export * from "./models/chat.ts";
+// --- Auth tables (inlined to avoid Vercel MODULE_NOT_FOUND on shared/models/auth) ---
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)]
+);
 
-// We need to import users to use them in relations
-import { users } from "./models/auth.ts";
+export const users = pgTable("users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email").unique(),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  profileImageUrl: varchar("profile_image_url"),
+  role: varchar("role").default("admin"),
+  username: varchar("username").unique(),
+  passwordHash: varchar("password_hash"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type UpsertUser = typeof users.$inferInsert;
+
+// --- Export chat ---
+export * from "./models/chat.ts";
 
 // --- Application Tables ---
 
