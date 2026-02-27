@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { z } from "zod";
-import { storage } from "../../lib";
+import { storage } from "../../lib.js";
 
 /**
  * GET/POST /api/invoices/:id/items

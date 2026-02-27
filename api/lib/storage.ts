@@ -1,4 +1,4 @@
-import { db } from "./db";
+import { db } from "./db.js";
 import { eq, desc, sql, and, gte, lte, like } from "drizzle-orm";
 import {
   clients, companies, projects, tasks, timeEntries, transactions, invoices, invoiceItems, invoiceSettings, financeSettings, users,
@@ -11,7 +11,7 @@ import {
   type Invoice, type InsertInvoice,
   type InvoiceItem, type InsertInvoiceItem,
   type InvoiceSettings, type UpdateInvoiceSettings,
-} from "../../shared/schema";
+} from "../../shared/schema.js";
 
 export interface IStorage {
   getClients(): Promise<Client[]>;

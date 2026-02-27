@@ -1,8 +1,8 @@
 /**
  * Vercel serverless uchun umumiy modullar
  */
-import { storage } from "./lib/storage";
-import { getUsdToUzsRate } from "./lib/currencyRate";
+import { storage } from "./lib/storage.js";
+import { getUsdToUzsRate } from "./lib/currencyRate.js";
 
 export { storage };
 

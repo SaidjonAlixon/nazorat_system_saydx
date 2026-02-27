@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { z } from "zod";
-import { storage } from "../lib";
+import { storage } from "../lib.js";
 
 const defaultPaymentDetailLines = [
   { title: "Bank nomi", value: "Your Bank Name" },
