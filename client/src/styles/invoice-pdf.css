@@ -288,12 +288,16 @@
   word-break: break-word;
 }
 
+/* Page margins — har sahifada yuqori/pastki chegaralar */
+@page {
+  margin: 10mm;
+}
+
 /* Print / PDF media — multi-page layout */
 @media print {
   .invoice-pdf-a4 {
     width: 210mm;
-    min-height: 297mm;
-    padding: 15mm;
+    padding: 12mm 15mm 15mm 15mm;
     margin: 0;
     overflow: visible;
     -webkit-print-color-adjust: exact;
@@ -304,13 +308,22 @@
     max-width: 180mm;
   }
 
-  /* Table header repeats on each page */
+  /* Table header repeats on each page — ustida joy */
   .invoice-pdf-a4__table thead {
     display: table-header-group;
   }
 
+  .invoice-pdf-a4__table thead tr th {
+    padding-top: 8pt;
+  }
+
   .invoice-pdf-a4__table tr {
     page-break-inside: avoid;
+  }
+
+  /* Sahifa boshlanishida bo'sh joy */
+  .invoice-pdf-a4__table-wrap {
+    margin-top: 4pt;
   }
 
   .invoice-pdf-a4__totals {

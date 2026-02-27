@@ -1,7 +1,7 @@
 import html2pdf from "html2pdf.js";
 
 const PDF_OPTIONS = {
-  margin: [0, 0, 0, 0] as [number, number, number, number],
+  margin: [10, 10, 10, 10] as [number, number, number, number],
   filename: "invoice.pdf",
   image: { type: "jpeg" as const, quality: 0.98 },
   html2canvas: { scale: 2, useCORS: true, letterRendering: true },
