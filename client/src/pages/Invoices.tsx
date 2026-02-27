@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { generateInvoicePdf } from "@/lib/generate-invoice-pdf";
 import {
   useInvoices,
   useCreateInvoice,
@@ -9,7 +10,6 @@ import {
   useAddInvoiceItem,
   useDeleteInvoiceItem,
 } from "@/hooks/use-finance";
-import { generateInvoicePdf } from "@/lib/generate-invoice-pdf";
 import { useProjects } from "@/hooks/use-projects";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { format } from "date-fns";
@@ -304,7 +304,6 @@ export default function Invoices() {
   type InvoiceRow = { title: string; quantity: number; unitPrice: string; serviceType?: "server" | "api"; startDate?: string };
   const [invoiceRows, setInvoiceRows] = useState<InvoiceRow[]>([{ title: "", quantity: 1, unitPrice: "" }]);
   const [itemsDialogInvId, setItemsDialogInvId] = useState<number | null>(null);
-  const [pdfGeneratingId, setPdfGeneratingId] = useState<number | null>(null);
 
   useEffect(() => {
     if (isInvDialogOpen) {
@@ -350,6 +349,7 @@ export default function Invoices() {
     },
   });
   const s = invoiceSettings;
+  const [pdfGeneratingId, setPdfGeneratingId] = useState<number | null>(null);
 
   const handleDownloadPdf = useCallback(
     async (inv: {
@@ -374,19 +374,11 @@ export default function Invoices() {
         ]);
         const items: { title: string; quantity: number; unitPrice: string }[] = itemsRes.ok ? await itemsRes.json() : [];
         const settings = settingsRes.ok ? await settingsRes.json() : invoiceSettings;
-
         const projectName = projects?.find((p) => p.id === inv.projectId)?.name;
-        const filename = inv.invoiceNumber.replace(/[^a-zA-Z0-9\-_.]/g, "_") || `INV-${String(inv.id).padStart(6, "0")}`;
-        const pdfFilename = filename.endsWith(".pdf") ? filename : `${filename}.pdf`;
-
+        const fname = inv.invoiceNumber.replace(/[^a-zA-Z0-9\-_.]/g, "_") || `INV-${String(inv.id).padStart(6, "0")}`;
+        const pdfFilename = fname.endsWith(".pdf") ? fname : `${fname}.pdf`;
         await generateInvoicePdf(
-          {
-            invoice: inv,
-            items,
-            projectName,
-            settings,
-            paymentDetailLines: settings?.paymentDetailLines,
-          },
+          { invoice: inv, items, projectName, settings, paymentDetailLines: settings?.paymentDetailLines },
           pdfFilename
         );
       } catch (e) {
@@ -872,7 +864,7 @@ export default function Invoices() {
                   disabled={pdfGeneratingId === inv.id}
                   onClick={() => handleDownloadPdf(inv)}
                 >
-                  <Download className="w-4 h-4 mr-1" />{" "}
+                  <Download className="w-4 h-4 mr-1" />
                   {pdfGeneratingId === inv.id ? "Yuklanmoqda..." : "PDF yuklash"}
                 </Button>
               </div>
