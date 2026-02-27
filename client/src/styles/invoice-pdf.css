@@ -1,0 +1,297 @@
+/**
+ * A4 Invoice PDF — Print-safe, strict layout
+ * Page: 210mm × 297mm | Margins: 15mm all sides | Content: 180mm × 267mm
+ */
+
+/* A4: 210mm × 297mm | Margins: 15mm all sides | Content: 180mm × 267mm */
+.invoice-pdf-a4.invoice-pdf-content {
+  box-sizing: border-box;
+  width: 210mm;
+  min-height: 297mm;
+  max-width: 210mm;
+  padding: 15mm;
+  margin: 0;
+  background: #fff;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 10pt;
+  line-height: 1.4;
+  color: #1a1a1a;
+  overflow: hidden;
+}
+
+.invoice-pdf-a4 *,
+.invoice-pdf-a4 *::before,
+.invoice-pdf-a4 *::after {
+  box-sizing: border-box;
+}
+
+/* Content wrapper — must not exceed 180mm × 267mm */
+.invoice-pdf-a4__inner {
+  width: 100%;
+  max-width: 180mm;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Header */
+.invoice-pdf-a4__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 100%;
+  margin-bottom: 12pt;
+  padding-bottom: 10pt;
+  border-bottom: 2px solid #0ea5e9;
+  flex-wrap: wrap;
+  gap: 8pt;
+}
+
+.invoice-pdf-a4__logo {
+  height: 44pt;
+  width: auto;
+  max-width: 100%;
+}
+
+.invoice-pdf-a4__brand {
+  font-size: 18pt;
+  font-weight: 700;
+  color: #0ea5e9;
+}
+
+.invoice-pdf-a4__title {
+  font-size: 14pt;
+  font-weight: 600;
+  color: #0f172a;
+  text-transform: uppercase;
+  letter-spacing: 0.5pt;
+}
+
+/* Two-column grid */
+.invoice-pdf-a4__grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12pt;
+  margin-bottom: 12pt;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.invoice-pdf-a4__block {
+  min-width: 0;
+  max-width: 100%;
+  padding: 10pt 12pt;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 4pt;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.invoice-pdf-a4__block-title {
+  font-size: 8pt;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5pt;
+  margin-bottom: 6pt;
+  padding-bottom: 4pt;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.invoice-pdf-a4__row {
+  margin-bottom: 3pt;
+  color: #334155;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  font-size: 9pt;
+}
+
+/* Table */
+.invoice-pdf-a4__table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  margin-bottom: 12pt;
+}
+
+.invoice-pdf-a4__table {
+  width: 100%;
+  max-width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 9pt;
+}
+
+.invoice-pdf-a4__table th,
+.invoice-pdf-a4__table td {
+  padding: 8pt 10pt;
+  border: 1px solid #e2e8f0;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.invoice-pdf-a4__table thead th {
+  background: #0ea5e9;
+  color: #fff;
+  font-weight: 600;
+  font-size: 8pt;
+  text-transform: uppercase;
+}
+
+.invoice-pdf-a4__table td {
+  background: #fff;
+}
+
+.invoice-pdf-a4__table .col-num { width: 8%; }
+.invoice-pdf-a4__table .col-name { width: 42%; }
+.invoice-pdf-a4__table .col-qty { width: 12%; }
+.invoice-pdf-a4__table .col-price { width: 18%; }
+.invoice-pdf-a4__table .col-total { width: 20%; }
+
+.invoice-pdf-a4__table .text-right { text-align: right; }
+
+/* Prevent table row break across pages */
+.invoice-pdf-a4__table tr {
+  page-break-inside: avoid;
+}
+
+/* Summary box */
+.invoice-pdf-a4__totals {
+  width: 100%;
+  max-width: 180mm;
+  margin-left: auto;
+  margin-bottom: 12pt;
+  padding: 10pt 14pt;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 4pt;
+}
+
+.invoice-pdf-a4__total-row {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  gap: 16pt;
+  margin-bottom: 4pt;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.invoice-pdf-a4__total-row span:last-child {
+  flex-shrink: 0;
+}
+
+.invoice-pdf-a4__grand-total {
+  margin-top: 6pt;
+  padding-top: 8pt;
+  border-top: 2px solid #bae6fd;
+  font-size: 12pt;
+  font-weight: 700;
+  color: #0ea5e9;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  gap: 16pt;
+}
+
+.invoice-pdf-a4__grand-total span:last-child {
+  flex-shrink: 0;
+}
+
+/* Payment block */
+.invoice-pdf-a4__payment {
+  width: 100%;
+  max-width: 100%;
+  padding: 10pt 12pt;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 4pt;
+  margin-bottom: 12pt;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* Footer / Signature */
+.invoice-pdf-a4__footer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  width: 100%;
+  max-width: 100%;
+  margin-top: 16pt;
+  padding-top: 12pt;
+  border-top: 1px solid #e2e8f0;
+}
+
+.invoice-pdf-a4__signature-block {
+  display: flex;
+  align-items: flex-end;
+  gap: 12pt;
+}
+
+.invoice-pdf-a4__stamp {
+  width: 52pt;
+  height: 52pt;
+  border-radius: 50%;
+  border: 2px solid #0ea5e9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 7pt;
+  font-weight: 700;
+  color: #0ea5e9;
+  flex-shrink: 0;
+}
+
+.invoice-pdf-a4__signature {
+  text-align: right;
+  font-size: 9pt;
+  color: #475569;
+}
+
+.invoice-pdf-a4__signature img {
+  max-width: 80pt;
+  height: auto;
+  margin-bottom: 4pt;
+}
+
+/* Meta footer */
+.invoice-pdf-a4__meta {
+  text-align: center;
+  font-size: 8pt;
+  color: #94a3b8;
+  margin-top: 12pt;
+  padding-top: 10pt;
+  border-top: 1px solid #f1f5f9;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* Print media */
+@media print {
+  .invoice-pdf-a4 {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 15mm;
+    margin: 0;
+    overflow: visible;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .invoice-pdf-a4__inner {
+    max-width: 180mm;
+  }
+
+  .invoice-pdf-a4__table tr {
+    page-break-inside: avoid;
+  }
+
+  .invoice-pdf-a4 * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

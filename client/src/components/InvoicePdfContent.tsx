@@ -1,3 +1,5 @@
+import "../styles/invoice-pdf.css";
+
 export type PaymentDetailLine = { title: string; value: string };
 export type InvoiceSettingsType = {
   companyName: string;
@@ -43,172 +45,6 @@ const dateStr = (d: Date | string) =>
     year: "numeric",
   }).replace(/\//g, ".");
 
-const styles = {
-  page: {
-    width: "794px",
-    minHeight: "1055px",
-    boxSizing: "border-box" as const,
-    padding: "32px 40px 36px",
-    backgroundColor: "#ffffff",
-    fontFamily: "'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', Arial, sans-serif",
-    fontSize: "11px",
-    lineHeight: 1.5,
-    color: "#1a1a1a",
-  },
-  header: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: "28px",
-    paddingBottom: "20px",
-    borderBottom: "2px solid #0ea5e9",
-  },
-  logo: { height: "48px", width: "auto" },
-  brand: {
-    fontSize: "22px",
-    fontWeight: 700,
-    color: "#0ea5e9",
-    letterSpacing: "0.5px",
-  },
-  title: {
-    fontSize: "18px",
-    fontWeight: 600,
-    color: "#0f172a",
-    letterSpacing: "1px",
-    textTransform: "uppercase" as const,
-  },
-  grid2: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", marginBottom: "20px", minWidth: 0 } as React.CSSProperties,
-  block: {
-    padding: "14px 16px",
-    backgroundColor: "#f8fafc",
-    borderRadius: "8px",
-    border: "1px solid #e2e8f0",
-    minWidth: 0,
-    overflowWrap: "break-word",
-    wordBreak: "break-word",
-  } as React.CSSProperties,
-  blockTitle: {
-    fontSize: "10px",
-    fontWeight: 600,
-    color: "#64748b",
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.8px",
-    marginBottom: "8px",
-    paddingBottom: "6px",
-    borderBottom: "1px solid #e2e8f0",
-  },
-  row: {
-    marginBottom: "4px",
-    color: "#334155",
-    overflowWrap: "break-word",
-    wordBreak: "break-word",
-    minWidth: 0,
-  } as React.CSSProperties,
-  table: {
-    width: "100%",
-    borderCollapse: "collapse" as const,
-    marginBottom: "16px",
-    borderRadius: "8px",
-    overflow: "hidden" as const,
-    border: "1px solid #e2e8f0",
-    tableLayout: "fixed" as const,
-  },
-  th: {
-    padding: "12px 14px",
-    textAlign: "left" as const,
-    backgroundColor: "#0ea5e9",
-    color: "#ffffff",
-    fontWeight: 600,
-    fontSize: "10px",
-    textTransform: "uppercase" as const,
-  },
-  td: {
-    padding: "10px 14px",
-    borderBottom: "1px solid #f1f5f9",
-    overflowWrap: "break-word",
-    wordBreak: "break-word",
-  } as React.CSSProperties,
-  tdRight: { textAlign: "right" as const },
-  totals: {
-    display: "flex",
-    flexDirection: "column" as const,
-    alignItems: "stretch",
-    gap: "6px",
-    padding: "14px 20px",
-    backgroundColor: "#f0f9ff",
-    borderRadius: "8px",
-    border: "1px solid #bae6fd",
-    marginBottom: "20px",
-    width: "100%",
-    maxWidth: "380px",
-    marginLeft: "auto",
-    boxSizing: "border-box" as const,
-  } as React.CSSProperties,
-  totalRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    width: "100%",
-    gap: "24px",
-    overflowWrap: "break-word",
-    wordBreak: "break-word",
-  } as React.CSSProperties,
-  totalLabel: { color: "#475569", fontWeight: 500 },
-  totalValue: { fontWeight: 600, color: "#0f172a" },
-  grandTotal: {
-    fontSize: "15px",
-    fontWeight: 700,
-    color: "#0ea5e9",
-    marginTop: "4px",
-    paddingTop: "8px",
-    borderTop: "2px solid #bae6fd",
-    width: "100%",
-    display: "flex",
-    justifyContent: "space-between",
-    gap: "24px",
-    overflowWrap: "break-word",
-    wordBreak: "break-word",
-  } as React.CSSProperties,
-  paymentBlock: {
-    padding: "14px 16px",
-    backgroundColor: "#f8fafc",
-    borderRadius: "8px",
-    border: "1px solid #e2e8f0",
-    marginBottom: "24px",
-    overflowWrap: "break-word",
-    wordBreak: "break-word",
-  } as React.CSSProperties,
-  footer: {
-    display: "flex",
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-    marginTop: "24px",
-    paddingTop: "20px",
-    borderTop: "1px solid #e2e8f0",
-  },
-  stamp: {
-    width: "64px",
-    height: "64px",
-    borderRadius: "50%",
-    border: "2px solid #0ea5e9",
-    display: "flex",
-    flexDirection: "column" as const,
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "8px",
-    fontWeight: 700,
-    color: "#0ea5e9",
-  },
-  signature: { textAlign: "right" as const, fontSize: "10px", color: "#475569" },
-  meta: {
-    textAlign: "center" as const,
-    fontSize: "9px",
-    color: "#94a3b8",
-    marginTop: "16px",
-    paddingTop: "12px",
-    borderTop: "1px solid #f1f5f9",
-  },
-};
-
 export function InvoicePdfContent({
   invoice,
   items,
@@ -238,128 +74,131 @@ export function InvoicePdfContent({
   const statusLabel = invoice.status === "paid" ? "To'langan" : "Kutilmoqda";
 
   return (
-    <div className="invoice-pdf-content" style={styles.page}>
-      {/* Header */}
-      <div style={styles.header}>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <img src="/LOGO2.png" alt="SAYD.X" style={styles.logo} />
-          <span style={styles.brand}>SAYD.X</span>
-        </div>
-        <h1 style={styles.title}>Hisob-faktura</h1>
-      </div>
+    <div className="invoice-pdf-a4 invoice-pdf-content">
+      <div className="invoice-pdf-a4__inner">
+        {/* Header */}
+        <header className="invoice-pdf-a4__header">
+          <div style={{ display: "flex", alignItems: "center", gap: "10pt" }}>
+            <img src="/LOGO2.png" alt="SAYD.X" className="invoice-pdf-a4__logo" />
+            <span className="invoice-pdf-a4__brand">SAYD.X</span>
+          </div>
+          <h1 className="invoice-pdf-a4__title">Hisob-faktura</h1>
+        </header>
 
-      {/* Invoice & Status */}
-      <div style={styles.grid2}>
-        <div style={styles.block}>
-          <div style={styles.blockTitle}>Hisob-faktura ma'lumotlari</div>
-          <div style={styles.row}>Raqam: {invoice.invoiceNumber}</div>
-          <div style={styles.row}>ID: {validationId}</div>
-          <div style={styles.row}>Sana: {dateStr(issueDate)}</div>
-          <div style={styles.row}>To'lov muddati: {dateStr(dueDate)}</div>
-          {projectName && <div style={styles.row}>Loyiha: {projectName}</div>}
+        {/* Invoice Details + Status */}
+        <div className="invoice-pdf-a4__grid2">
+          <div className="invoice-pdf-a4__block">
+            <div className="invoice-pdf-a4__block-title">Hisob-faktura ma'lumotlari</div>
+            <div className="invoice-pdf-a4__row">Raqam: {invoice.invoiceNumber}</div>
+            <div className="invoice-pdf-a4__row">ID: {validationId}</div>
+            <div className="invoice-pdf-a4__row">Sana: {dateStr(issueDate)}</div>
+            <div className="invoice-pdf-a4__row">To'lov muddati: {dateStr(dueDate)}</div>
+            {projectName && <div className="invoice-pdf-a4__row">Loyiha: {projectName}</div>}
+          </div>
+          <div className="invoice-pdf-a4__block">
+            <div className="invoice-pdf-a4__block-title">Holat va valyuta</div>
+            <div className="invoice-pdf-a4__row">Holat: {statusLabel}</div>
+            <div className="invoice-pdf-a4__row">To'lov shartlari: {invoice.paymentTerms || "7 kun ichida"}</div>
+            <div className="invoice-pdf-a4__row">Valyuta: {invoice.currency}</div>
+          </div>
         </div>
-        <div style={styles.block}>
-          <div style={styles.blockTitle}>Holat va valyuta</div>
-          <div style={styles.row}>Holat: {statusLabel}</div>
-          <div style={styles.row}>To'lov shartlari: {invoice.paymentTerms || "7 kun ichida"}</div>
-          <div style={styles.row}>Valyuta: {invoice.currency}</div>
-        </div>
-      </div>
 
-      {/* From / Bill To */}
-      <div style={styles.grid2}>
-        <div style={styles.block}>
-          <div style={styles.blockTitle}>FROM (Tomonidan)</div>
-          <div style={styles.row}>{settings.companyName}</div>
-          <div style={styles.row}>{settings.address}</div>
-          <div style={styles.row}>{settings.phone}</div>
-          <div style={styles.row}>{settings.email} • {settings.website}</div>
+        {/* From / Bill To */}
+        <div className="invoice-pdf-a4__grid2">
+          <div className="invoice-pdf-a4__block">
+            <div className="invoice-pdf-a4__block-title">FROM (Tomonidan)</div>
+            <div className="invoice-pdf-a4__row">{settings.companyName}</div>
+            <div className="invoice-pdf-a4__row">{settings.address}</div>
+            <div className="invoice-pdf-a4__row">{settings.phone}</div>
+            <div className="invoice-pdf-a4__row">{settings.email} • {settings.website}</div>
+          </div>
+          <div className="invoice-pdf-a4__block">
+            <div className="invoice-pdf-a4__block-title">BILL TO (Kimga)</div>
+            <div className="invoice-pdf-a4__row">{invoice.clientName || "—"}</div>
+            <div className="invoice-pdf-a4__row">{invoice.company || "—"}</div>
+            <div className="invoice-pdf-a4__row">{invoice.billToContact || "—"}</div>
+          </div>
         </div>
-        <div style={styles.block}>
-          <div style={styles.blockTitle}>BILL TO (Kimga)</div>
-          <div style={styles.row}>{invoice.clientName || "—"}</div>
-          <div style={styles.row}>{invoice.company || "—"}</div>
-          <div style={styles.row}>{invoice.billToContact || "—"}</div>
-        </div>
-      </div>
 
-      {/* Items Table */}
-      <table style={styles.table}>
-        <thead>
-          <tr>
-            <th style={{ ...styles.th, width: "48px" }}>T/r</th>
-            <th style={{ ...styles.th, width: "auto" }}>Xizmat nomi</th>
-            <th style={{ ...styles.th, ...styles.tdRight, width: "64px" }}>Soni</th>
-            <th style={{ ...styles.th, ...styles.tdRight, width: "100px" }}>Narx</th>
-            <th style={{ ...styles.th, ...styles.tdRight, width: "130px" }}>Summa</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((item, i) => {
-            const sum = Number(item.quantity) * Number(item.unitPrice);
-            return (
-              <tr key={i}>
-                <td style={{ ...styles.td, color: "#64748b" }}>{i + 1}</td>
-                <td style={styles.td}>{item.title}</td>
-                <td style={{ ...styles.td, ...styles.tdRight }}>{item.quantity}</td>
-                <td style={{ ...styles.td, ...styles.tdRight }}>{formatNum(Number(item.unitPrice))}</td>
-                <td style={{ ...styles.td, ...styles.tdRight, fontWeight: 600 }}>{formatNum(sum)}</td>
+        {/* Services Table */}
+        <div className="invoice-pdf-a4__table-wrap">
+          <table className="invoice-pdf-a4__table">
+            <thead>
+              <tr>
+                <th className="col-num">T/r</th>
+                <th className="col-name">Xizmat nomi</th>
+                <th className="col-qty text-right">Soni</th>
+                <th className="col-price text-right">Narx</th>
+                <th className="col-total text-right">Summa</th>
               </tr>
-            );
-          })}
-        </tbody>
-      </table>
+            </thead>
+            <tbody>
+              {items.map((item, i) => {
+                const sum = Number(item.quantity) * Number(item.unitPrice);
+                return (
+                  <tr key={i}>
+                    <td className="col-num">{i + 1}</td>
+                    <td className="col-name">{item.title}</td>
+                    <td className="col-qty text-right">{item.quantity}</td>
+                    <td className="col-price text-right">{formatNum(Number(item.unitPrice))}</td>
+                    <td className="col-total text-right" style={{ fontWeight: 600 }}>{formatNum(sum)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
 
-      {/* Totals */}
-      <div style={styles.totals}>
-        <div style={styles.totalRow}>
-          <span style={styles.totalLabel}>Subtotal:</span>
-          <span style={{ ...styles.totalValue, flexShrink: 0 }}>{formatNum(subtotal)} {invoice.currency}</span>
-        </div>
-        <div style={styles.totalRow}>
-          <span style={styles.totalLabel}>Tax:</span>
-          <span style={{ ...styles.totalValue, flexShrink: 0 }}>{formatNum(tax)} {invoice.currency}</span>
-        </div>
-        <div style={styles.totalRow}>
-          <span style={styles.totalLabel}>Discount:</span>
-          <span style={{ ...styles.totalValue, flexShrink: 0 }}>{formatNum(discount)} {invoice.currency}</span>
-        </div>
-        <div style={styles.grandTotal}>
-          <span>JAMI:</span>
-          <span style={{ flexShrink: 0 }}>{formatNum(total)} {invoice.currency}</span>
-        </div>
-      </div>
-
-      {/* Payment Details */}
-      <div style={styles.paymentBlock}>
-        <div style={{ ...styles.blockTitle, marginBottom: "10px" }}>To'lov ma'lumotlari</div>
-        {lines.map((line, i) => (
-          <div key={i} style={styles.row}>
-            {line.title ? `${line.title}: ${line.value}` : line.value}
+        {/* Summary */}
+        <div className="invoice-pdf-a4__totals" style={{ width: "100%", maxWidth: "100%" }}>
+          <div className="invoice-pdf-a4__total-row">
+            <span>Subtotal:</span>
+            <span>{formatNum(subtotal)} {invoice.currency}</span>
           </div>
-        ))}
-        <div style={{ ...styles.row, marginTop: "8px", color: "#64748b" }}>{settings.paymentNote}</div>
-      </div>
-
-      {/* Footer */}
-      <div style={styles.footer}>
-        <div />
-        <div style={{ display: "flex", alignItems: "flex-end", gap: "16px" }}>
-          <div style={styles.stamp}>
-            <span>SAYD.X</span>
-            <span>VERIFIED</span>
+          <div className="invoice-pdf-a4__total-row">
+            <span>Tax:</span>
+            <span>{formatNum(tax)} {invoice.currency}</span>
           </div>
-          <div style={styles.signature}>
-            <img src="/imzo.PNG" alt="Imzo" style={{ height: "40px", marginBottom: "4px" }} />
-            <div>{settings.authorizedName}</div>
-            <div>{settings.authorizedPosition}</div>
-            <div>{dateStr(issueDate)}</div>
+          <div className="invoice-pdf-a4__total-row">
+            <span>Discount:</span>
+            <span>{formatNum(discount)} {invoice.currency}</span>
+          </div>
+          <div className="invoice-pdf-a4__grand-total">
+            <span>JAMI:</span>
+            <span>{formatNum(total)} {invoice.currency}</span>
           </div>
         </div>
-      </div>
 
-      <div style={styles.meta}>
-        {settings.website} • {settings.email} • Generated by SAYD.X • Invoice ID: {validationId}
+        {/* Payment Information */}
+        <div className="invoice-pdf-a4__payment">
+          <div className="invoice-pdf-a4__block-title" style={{ marginBottom: "6pt" }}>To'lov ma'lumotlari</div>
+          {lines.map((line, i) => (
+            <div key={i} className="invoice-pdf-a4__row">
+              {line.title ? `${line.title}: ${line.value}` : line.value}
+            </div>
+          ))}
+          <div className="invoice-pdf-a4__row" style={{ marginTop: "6pt", color: "#64748b" }}>{settings.paymentNote}</div>
+        </div>
+
+        {/* Footer / Signature */}
+        <div className="invoice-pdf-a4__footer">
+          <div className="invoice-pdf-a4__signature-block">
+            <div className="invoice-pdf-a4__stamp">
+              <span>SAYD.X</span>
+              <span>VERIFIED</span>
+            </div>
+            <div className="invoice-pdf-a4__signature">
+              <img src="/imzo.PNG" alt="Imzo" />
+              <div>{settings.authorizedName}</div>
+              <div>{settings.authorizedPosition}</div>
+              <div>{dateStr(issueDate)}</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="invoice-pdf-a4__meta">
+          {settings.website} • {settings.email} • Generated by SAYD.X • Invoice ID: {validationId}
+        </div>
       </div>
     </div>
   );
